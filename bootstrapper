@@ -1,0 +1,104 @@
+#!/bin/bash
+set -eu
+
+# Get bootstrapper root directory and export it
+BOOTSTRAPPER_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export BOOTSTRAPPER_ROOT
+
+# Source required utilities
+source "$BOOTSTRAPPER_ROOT/core/_logging.sh"
+source "$BOOTSTRAPPER_ROOT/core/_platform.sh"
+source "$BOOTSTRAPPER_ROOT/core/_module.sh"
+source "$BOOTSTRAPPER_ROOT/core/_package.sh"
+source "$BOOTSTRAPPER_ROOT/core/_python.sh"
+
+# Print a brief usage information
+show_brief_usage() {
+  log_info "Usage: bootstrapper <command> [arguments]"
+  log_info ""
+  log_info "Commands:"
+  log_info "  init <shell>    Initialize bootstrapper for the specified shell (bash, zsh, fish)"
+  log_info "  help            Display detailed help information"
+  log_info "  version         Display bootstrapper version information"
+  log_info "  <module> ...    Bootstrap one or more modules"
+  log_info ""
+  log_info "Run 'bootstrapper help' for more information."
+}
+
+# Check if command is a core command
+is_core_command() {
+  local command="$1"
+  if [[ -f "$BOOTSTRAPPER_ROOT/core/$command.sh" ]]; then
+    return 0  # True, it is a core command
+  else
+    return 1  # False, it is not a core command
+  fi
+}
+
+# Check if no arguments provided
+if [ $# -eq 0 ]; then
+  log_error "Error: No command or module specified."
+  show_brief_usage
+  exit 1
+fi
+
+# Get the command or module name
+COMMAND="$1"
+shift  # Remove the command from the arguments
+
+# Check if it's a core command
+if is_core_command "$COMMAND"; then
+  # Execute the core command
+  source "$BOOTSTRAPPER_ROOT/core/$COMMAND.sh"
+  if [[ "$COMMAND" == "help" ]]; then
+    show_help
+  fi
+  exit $?
+fi
+
+# Check if platform is detected
+if [[ "$PLATFORM" == "unknown" ]]; then
+  log_error "Error: Unsupported platform detected."
+  exit 1
+fi
+
+# Display platform information
+log_info "Platform: $PLATFORM ($PLATFORM_FAMILY)"
+log_info "Package manager: $PACKAGE_MANAGER"
+
+# Process each module
+for module in "$COMMAND" "$@"; do
+  log_section "Bootstrapping module: $module"
+  
+  module_dir="$BOOTSTRAPPER_ROOT/modules/$module"
+  module_script="$module_dir/module.sh"
+  platform_script="$module_dir/$PLATFORM.sh"
+  
+  # Check if the module directory exists
+  if [[ -d "$module_dir" ]]; then
+    # Check if the module has a platform-specific implementation
+    if [[ -f "$platform_script" ]]; then
+      log_info "Using platform-specific implementation for $PLATFORM..."
+      source "$platform_script"
+      log_success "✅ Module $module completed"
+    
+    # Check if the module has a module.sh file
+    elif [[ -f "$module_script" ]]; then
+      log_info "Using module implementation..."
+      source "$module_script"
+      log_success "✅ Module $module completed"
+    
+    # Module exists but no implementation found
+    else
+      log_error "Error: No implementation found for module $module on platform $PLATFORM!"
+      exit 1
+    fi
+  
+  # Module directory not found
+  else
+    log_error "Error: Module $module not found!"
+    exit 1
+  fi
+done
+
+log_success "All modules completed successfully!" 
