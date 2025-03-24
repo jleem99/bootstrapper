@@ -40,10 +40,12 @@ show_help() {
         
         # Check if module is supported on current platform
         if [[ -f "$module_dir/$PLATFORM.sh" ]]; then
-          log_success "$module_name"
-          log_info "  $description"
+          log_success "  $module_name"
+          if [[ -n "$description" ]]; then
+            log_info "    $description"
+          fi
         else
-          log_warning "$module_name (not supported on current platform)"
+          log_warning "  $module_name (not supported on current platform)"
         fi
       fi
     fi

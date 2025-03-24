@@ -1,0 +1,13 @@
+*
+.*
+
+!core/
+!modules/
+
+!init.sh
+!install.sh
+!bootstrapper
+
+!README.md
+!LICENSE
+!.gitignore

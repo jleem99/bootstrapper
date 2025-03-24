@@ -17,7 +17,9 @@ echo -e "${BLUE}Installing bootstrapper...${NC}"
 if [[ -d "$INSTALL_DIR/.git" ]]; then
   echo -e "${BLUE}Updating existing installation...${NC}"
   cd "$INSTALL_DIR"
-  git pull
+  git stash
+  git fetch origin
+  git checkout origin/main
 else
   echo -e "${BLUE}Cloning repository...${NC}"
   git clone https://github.com/jleem99/bootstrapper.git "$INSTALL_DIR"
