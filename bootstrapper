@@ -2,7 +2,7 @@
 set -eu
 
 # Get bootstrapper root directory and export it
-BOOTSTRAPPER_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BOOTSTRAPPER_ROOT="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 export BOOTSTRAPPER_ROOT
 
 # Source required utilities
