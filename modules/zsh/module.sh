@@ -3,12 +3,6 @@ set -eu
 
 log_info "Running zsh module..."
 
-# Define supported platforms
-SUPPORTED_PLATFORMS=("debian" "macos")
-
-# Check if the platform is supported
-module_check_supported "zsh" "${SUPPORTED_PLATFORMS[@]}"
-
 ensure_packages_installed "zsh" "curl" "git"
 
 chsh -s $(which zsh)
@@ -24,4 +18,4 @@ sed -i 's/^plugins=(/plugins=(\n  zsh-syntax-highlighting\n  /' ~/.zshrc
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 sed -i 's/^plugins=(/plugins=(\n  zsh-autosuggestions\n  /' ~/.zshrc
 
-log_success "zsh module completed successfully!" 
+log_success "zsh module completed successfully!"

@@ -1,8 +1,7 @@
-*
-.*
+**/*.*
 
-!core/
-!modules/
+!core/**
+!modules/**
 
 !init.sh
 !install.sh
