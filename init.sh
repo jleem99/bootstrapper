@@ -13,7 +13,7 @@ INSTALL_DIR="$HOME/.local/share/bootstrapper"
 BIN_DIR="$HOME/.local/bin"
 
 # Determine shell type from argument or $SHELL
-CURRENT_SHELL="$1"
+CURRENT_SHELL="${1:-}"
 if [[ -z "$CURRENT_SHELL" ]]; then
   case "$SHELL" in
     */bash)
@@ -56,7 +56,7 @@ if [[ ! -f "$SHELL_PROFILE" ]]; then
 fi
 
 # Add to PATH
-add_to_path "$CURRENT_SHELL" "$BIN_DIR" "$SHELL_PROFILE"
+add_to_path "$CURRENT_SHELL" "$BIN_DIR"
 
 log_success "Bootstrapper initialized successfully!"
 log_info "To start using bootstrapper immediately, run:"

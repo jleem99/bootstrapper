@@ -25,7 +25,7 @@ get_shell_profile() {
 add_to_path() {
   local shell="$1"
   local bin_dir="$2"
-  local profile="$3"
+  local profile="${3:-$(get_shell_profile "$shell")}"
 
   log_info "Adding $bin_dir to \$PATH in $profile"
   

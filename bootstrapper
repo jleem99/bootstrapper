@@ -21,6 +21,7 @@ show_brief_usage() {
   log_info "  init <shell>    Initialize bootstrapper for the specified shell (bash, zsh, fish)"
   log_info "  help            Display detailed help information"
   log_info "  version         Display bootstrapper version information"
+  log_info "  update          Update bootstrapper to the latest version"
   log_info "  <module> ...    Bootstrap one or more modules"
   log_info ""
   log_info "Run 'bootstrapper help' for more information."
@@ -74,32 +75,32 @@ for module in "$COMMAND" "$@"; do
   module_dir="$BOOTSTRAPPER_ROOT/modules/$module"
   module_script="$module_dir/module.sh"
   platform_script="$module_dir/$PLATFORM.sh"
-  
-  # Check if the module directory exists
-  if [[ -d "$module_dir" ]]; then
-    # Check if the module has a platform-specific implementation
-    if [[ -f "$platform_script" ]]; then
-      log_info "Using platform-specific implementation for $PLATFORM..."
-      source "$platform_script"
-      log_success "✅ Module $module completed"
-    
-    # Check if the module has a module.sh file
-    elif [[ -f "$module_script" ]]; then
-      log_info "Using module implementation..."
-      source "$module_script"
-      log_success "✅ Module $module completed"
-    
-    # Module exists but no implementation found
-    else
-      log_error "Error: No implementation found for module $module on platform $PLATFORM!"
-      exit 1
-    fi
-  
-  # Module directory not found
+
+  if [[ -f "$module_script" ]]; then
+    source "$module_script"
   else
-    log_error "Error: Module $module not found!"
+    log_error "Error: No implementation found for module $module on platform $PLATFORM!"
     exit 1
   fi
+  
+  # # Check if the module has a platform-specific implementation
+  # if [[ -f "$platform_script" ]]; then
+  #   log_info "Using platform-specific implementation for $PLATFORM..."
+  #   source "$platform_script"
+  #   log_success "✅ Module $module completed"
+  
+  # # Check if the module has a module.sh file
+  # elif [[ -f "$module_script" ]]; then
+  #   log_info "Using module implementation..."
+  #   source "$module_script"
+  #   log_success "✅ Module $module completed"
+  
+  # # Module exists but no implementation found
+  # else
+  #   log_error "Error: No implementation found for module $module on platform $PLATFORM!"
+  #   exit 1
+  # fi
+  
 done
 
 log_success "All modules completed successfully!" 
