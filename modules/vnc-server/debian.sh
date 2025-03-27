@@ -66,23 +66,59 @@ mkdir -p "$VNC_CONFIG_DIR"
 cat > "$VNC_CONFIG_DIR/xstartup" << 'EOF'
 #!/bin/bash
 
-# Uncomment the following two lines for normal desktop:
+# Unset session managers
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 
-# Set up environment
-export XDG_SESSION_TYPE=x11
-export GDK_BACKEND=x11
-export DESKTOP_SESSION=gnome
-export GNOME_SHELL_SESSION_MODE=ubuntu
-export XDG_CURRENT_DESKTOP=GNOME
-export XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
+# Set proper display variable - critical for VNC
+export DISPLAY=:1
 
 # Force software rendering for better compatibility
 export LIBGL_ALWAYS_SOFTWARE=1
 
-# Start GNOME Session
-exec gnome-session
+# Set required environment variables for GNOME Flashback
+export XDG_SESSION_TYPE=x11
+export GDK_BACKEND=x11
+export XDG_CURRENT_DESKTOP=GNOME-Flashback:GNOME
+export GNOME_SHELL_SESSION_MODE=classic
+export DESKTOP_SESSION=gnome-flashback-metacity
+export GNOME_DESKTOP_SESSION_ID=this-is-deprecated
+
+# Make sure the runtime directory exists
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+mkdir -p $XDG_RUNTIME_DIR
+chmod 0700 $XDG_RUNTIME_DIR
+
+# Start window manager with metacity specifically
+metacity &
+
+# Wait for metacity to start
+sleep 1
+
+# Start gnome-panel (part of flashback)
+gnome-panel &
+
+# Start gnome-settings-daemon (find the right binary based on distro)
+if [ -x /usr/libexec/gnome-settings-daemon-localeexec ]; then
+    /usr/libexec/gnome-settings-daemon-localeexec &
+elif [ -x /usr/lib/gnome-settings-daemon/gnome-settings-daemon ]; then
+    /usr/lib/gnome-settings-daemon/gnome-settings-daemon &
+elif [ -x /usr/libexec/gnome-settings-daemon/gnome-settings-daemon ]; then
+    /usr/libexec/gnome-settings-daemon/gnome-settings-daemon &
+fi
+
+# Set up clipboard
+if command -v autocutsel >/dev/null 2>&1; then
+    autocutsel -fork &
+fi
+
+# Start VNC config utility for clipboard sharing
+if command -v vncconfig >/dev/null 2>&1; then
+    vncconfig -iconic &
+fi
+
+# Start GNOME Session for Flashback
+exec gnome-session --session=gnome-flashback-metacity
 EOF
 
 # Make the xstartup file executable
@@ -110,13 +146,17 @@ cat > ~/.config/systemd/user/vncserver@.service << EOF
 [Unit]
 Description=Remote desktop service (VNC)
 After=network.target
+PartOf=graphical-session.target
 
 [Service]
-Type=simple
-ExecStartPre=/bin/sh -c 'mkdir -p ~/.vnc/logs'
+Type=forking
+PIDFile=${HOME}/.vnc/%H:%i.pid
+ExecStartPre=/bin/sh -c 'mkdir -p ${HOME}/.vnc/logs'
 ExecStartPre=-/bin/sh -c '/usr/bin/vncserver -kill :%i > /dev/null 2>&1'
-ExecStart=/usr/bin/vncserver :%i -localhost no -geometry 1920x1080 -depth 24 -rfbauth $HOME/.vnc/passwd
+ExecStart=/usr/bin/vncserver :%i -localhost no -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -rfbport 590%i
 ExecStop=/usr/bin/vncserver -kill :%i
+Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=default.target
