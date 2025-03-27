@@ -21,7 +21,6 @@ sudo apt-get install -y \
 
 # Core GNOME desktop environment
 sudo apt-get install -y \
-    gnome-session \
     gnome-shell \
     gnome-terminal \
     gnome-control-center \
@@ -87,7 +86,6 @@ export MESA_GLSL_VERSION_OVERRIDE=330
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 export XDG_CURRENT_DESKTOP="GNOME"
-export GNOME_SHELL_SESSION_MODE=ubuntu
 
 # Add to environment variables
 export XDG_RUNTIME_DIR=/run/user/$(id -u)
@@ -199,10 +197,6 @@ if [[ ! -s "$VNC_CONFIG_DIR/passwd" ]]; then
   echo "vncserver" | vncpasswd -f > "$VNC_CONFIG_DIR/passwd"
   chmod 600 "$VNC_CONFIG_DIR/passwd"
 fi
-
-# Check multiple firewall backends
-VNC_PORT=$((5900 + ${VNC_DISPLAY:-1}))
-log_info "VNC server would use port $VNC_PORT (configure firewall manually if needed)"
 
 # Install the service properly for user services
 systemctl --user daemon-reload
