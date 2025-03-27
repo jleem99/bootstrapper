@@ -41,6 +41,9 @@ sudo apt-get install -y \
     gnome-keyring \
     gnome-user-share
 
+# Add basic GNOME panel for fallback if needed
+sudo apt-get install -y gnome-panel
+
 # Add enhanced GL support and fix missing libraries
 sudo apt-get install -y \
     mesa-utils \
@@ -95,7 +98,7 @@ unset DBUS_SESSION_BUS_ADDRESS
 # Set standard environment variables
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
-export DESKTOP_SESSION=gnome-xorg
+export DESKTOP_SESSION=gnome
 export GNOME_SHELL_SESSION_MODE=ubuntu
 export XDG_CURRENT_DESKTOP=GNOME
 export XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
@@ -108,35 +111,43 @@ export MESA_GL_VERSION_OVERRIDE=3.0
 # Setup dbus
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     eval $(dbus-launch --sh-syntax)
+    echo "Started dbus session: $DBUS_SESSION_BUS_ADDRESS"
 fi
 
 # Start autocutsel for clipboard support
 autocutsel -fork -selection PRIMARY
 autocutsel -fork -selection CLIPBOARD
 
-# Start a basic window manager first in case GNOME session fails
+# Start a window manager as a fallback
 metacity --replace &
+METACITY_PID=$!
 
 # Try GNOME with different methods in case one fails
 if command -v gnome-session >/dev/null 2>&1; then
-    # Try standard GNOME session
-    if [ -f /usr/share/gnome-session/sessions/gnome-xorg.session ]; then
-        exec gnome-session --session=gnome-xorg
-    elif [ -f /usr/share/gnome-session/sessions/gnome.session ]; then
+    # Find available sessions
+    AVAILABLE_SESSIONS=$(find /usr/share/gnome-session/sessions/ -name "*.session" | awk -F'/' '{print $NF}' | sed 's/.session//')
+    echo "Available sessions: $AVAILABLE_SESSIONS"
+    
+    # Try to start standard GNOME (no flashback/classic)
+    if [ -f /usr/share/gnome-session/sessions/gnome.session ]; then
+        echo "Starting standard GNOME session"
         exec gnome-session --session=gnome
-    elif [ -f /usr/share/gnome-session/sessions/gnome-classic.session ]; then
-        exec gnome-session --session=gnome-classic
+    elif [ -f /usr/share/gnome-session/sessions/gnome-xorg.session ]; then
+        echo "Starting GNOME Xorg session"
+        exec gnome-session --session=gnome-xorg
     else
         # Fallback to running components directly
-        gnome-panel &
+        echo "Starting individual GNOME components"
         gnome-settings-daemon &
-        nautilus &
-        exec metacity
+        sleep 1
+        nautilus --no-desktop &
+        wait $METACITY_PID
     fi
 else
     # Ultimate fallback
+    echo "GNOME session not found, using fallback"
     xterm &
-    exec metacity
+    wait $METACITY_PID
 fi
 EOF
 
@@ -165,14 +176,18 @@ cat > ~/.config/systemd/user/vncserver@.service << EOF
 [Unit]
 Description=Remote desktop service (VNC)
 After=network.target
+Requires=dbus.service
+After=dbus.service
 
 [Service]
-Type=simple
-ExecStartPre=-/bin/sh -c '/usr/bin/vncserver -kill :%i > /dev/null 2>&1'
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -localhost no -rfbauth $HOME/.vnc/passwd -rfbport 590%i -SecurityTypes VncAuth -extension RANDR
+Type=forking
+ExecStartPre=-/bin/sh -c '/usr/bin/vncserver -kill :%i > /dev/null 2>&1 || true'
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -localhost no -rfbauth $HOME/.vnc/passwd -rfbport 590%i -SecurityTypes VncAuth
 ExecStop=/usr/bin/vncserver -kill :%i
 Restart=on-failure
 RestartSec=10
+Environment=XDG_SESSION_TYPE=x11
+Environment=DISPLAY=:1
 
 [Install]
 WantedBy=default.target
@@ -209,21 +224,21 @@ vncserver -kill :1 >/dev/null 2>&1 || true
 mkdir -p /run/user/$(id -u)/
 sudo chmod 700 /run/user/$(id -u)/
 
-# Create a gnome fallback session file
+# Create a GNOME session file for fallback
 mkdir -p ~/.local/share/applications
 cat > ~/.local/share/applications/gnome-session-fallback.desktop << EOF
 [Desktop Entry]
 Type=Application
-Name=GNOME Classic Fallback
-Comment=This session logs you into GNOME with the traditional panel
-Exec=gnome-session --session=gnome-classic
+Name=GNOME Fallback
+Comment=This session logs you into full GNOME
+Exec=gnome-session --session=gnome
 TryExec=gnome-session
 NoDisplay=true
 X-GNOME-AutoRestart=true
 X-GNOME-Autostart-Phase=Applications
 X-GNOME-Provides=windowmanager
 X-GDM-BypassXsession=true
-X-GNOME-WMName=Metacity
+X-GNOME-WMName=Mutter
 EOF
 
 # Create backup VNC start script
@@ -249,7 +264,7 @@ done
 # Create .xinitrc to ensure proper X startup
 cat > ~/.xinitrc << 'EOF'
 #!/bin/bash
-exec gnome-session --session=gnome-xorg
+exec gnome-session --session=gnome
 EOF
 chmod +x ~/.xinitrc
 
@@ -267,9 +282,12 @@ systemctl --user enable vncserver@1.service
 systemctl --user restart vncserver@1.service
 
 # Check if service started successfully
-sleep 3
+log_info "Waiting for VNC service to fully start..."
+sleep 5  # Increased wait time for service to start
 if ! systemctl --user is-active --quiet vncserver@1.service; then
-    log_error "VNC service failed to start. Check logs with: journalctl --user-unit vncserver@1.service"
+    log_error "VNC service failed to start. Checking logs..."
+    systemctl --user status vncserver@1.service
+    log_error "For more details, run: journalctl --user-unit vncserver@1.service"
     exit 1
 fi
 
