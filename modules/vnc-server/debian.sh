@@ -52,8 +52,7 @@ sudo apt-get install -y \
 
 # Window manager and session components
 sudo apt-get install -y \
-    metacity \
-    xfce4-notifyd
+    metacity
 
 # Audio and system components
 sudo apt-get install -y \
@@ -88,7 +87,6 @@ export MESA_GLSL_VERSION_OVERRIDE=330
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 export XDG_CURRENT_DESKTOP="GNOME"
-export DESKTOP_SESSION=ubuntu
 export GNOME_SHELL_SESSION_MODE=ubuntu
 
 # Add to environment variables
@@ -164,7 +162,6 @@ Type=forking
 WorkingDirectory=${HOME}
 Environment="DISPLAY=:%i"
 Environment="HOME=${HOME}"
-Environment="LIBGL_ALWAYS_SOFTWARE=1"
 PIDFile=${HOME}/.vnc/%H:%i.pid
 
 ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
@@ -176,9 +173,9 @@ ExecStopPost=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1'
 ExecStopPost=/bin/sh -c 'rm -f /tmp/.X*-lock /tmp/.X11-unix/X*'  # Ensure socket cleanup
 
 # Add process killing protections
-KillMode=mixed
+KillMode=process
 KillSignal=SIGINT
-TimeoutStopSec=20
+TimeoutStopSec=5
 Restart=on-failure
 RestartSec=5
 RemainAfterExit=no
@@ -190,18 +187,11 @@ EOF
 # Create a VNC log viewing helper
 cat > ~/view-vnc-log.sh << 'EOF'
 #!/bin/bash
-LOGFILE=$(find ~/.vnc -name '*.log' -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+LOGFILE=$(find ~/.vnc -name '*.log' -print | sort -r | head -1)
 echo "Viewing most recent VNC log: $LOGFILE"
 tail -f "$LOGFILE"
 EOF
 chmod +x ~/view-vnc-log.sh
-
-# Create GNOME config to disable hardware acceleration requirements
-mkdir -p ~/.config/gnome-session/
-cat > ~/.config/gnome-session/gnome-session.conf << 'EOF'
-[GNOME Session]
-RequireHardwareAcceleration=false
-EOF
 
 # Verify VNC password file exists and has content
 if [[ ! -s "$VNC_CONFIG_DIR/passwd" ]]; then
@@ -212,32 +202,7 @@ fi
 
 # Check multiple firewall backends
 VNC_PORT=$((5900 + ${VNC_DISPLAY:-1}))
-if command -v nft && systemctl is-active --quiet nftables; then
-    sudo nft add rule inet filter input tcp dport $VNC_PORT counter accept
-elif command -v firewall-cmd &> /dev/null; then
-    sudo firewall-cmd --add-port=${VNC_PORT}/tcp --permanent
-    sudo firewall-cmd --reload
-elif command -v ufw &> /dev/null; then
-    sudo ufw allow ${VNC_PORT}/tcp
-fi
-
-# Keep text mode default
-sudo systemctl set-default multi-user.target
-
-# Clean up any existing VNC sessions
-cleanup() {
-    systemctl --user stop vncserver@1.service 2>/dev/null || true
-    pkill -U $USER -f "Xtigervnc" 2>/dev/null || true
-    pkill -U $USER -f "gnome-session" 2>/dev/null || true  # Add GNOME session cleanup
-    rm -f /tmp/.X*-lock /tmp/.X11-unix/X* 2>/dev/null || true
-    rm -f ~/.vnc/*.pid 2>/dev/null || true  # Clean PID files
-    # Add Wayland cleanup
-    rm -rf ${XDG_RUNTIME_DIR}/wayland-*
-    # Clear existing Xauthority
-    rm -f ~/.Xauthority
-    touch ~/.Xauthority
-}
-trap cleanup EXIT
+log_info "VNC server would use port $VNC_PORT (configure firewall manually if needed)"
 
 # Install the service properly for user services
 systemctl --user daemon-reload
@@ -261,10 +226,3 @@ log_info "VNC server started!"
 log_info "Connect to $IP_ADDRESS:$VNC_PORT using a VNC client"
 log_info "If you have issues, check the logs with: ~/view-vnc-log.sh"
 log_info "Note: Make sure your cloud provider allows incoming connections on port $VNC_PORT"
-
-# Start pulseaudio service
-systemctl --user enable pulseaudio.service
-systemctl --user start pulseaudio.service
-
-# Add dbus machine-id generation (critical for some systems)
-sudo dbus-uuidgen --ensure
