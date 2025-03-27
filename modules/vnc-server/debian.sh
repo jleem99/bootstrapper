@@ -165,8 +165,8 @@ Environment="DISPLAY=:%i"
 Environment="HOME=${HOME}"
 Environment="LIBGL_ALWAYS_SOFTWARE=1"
 
-ExecStartPre=/usr/bin/vncserver -kill :%i || true
-ExecStartPre=/bin/sh -c 'pkill -U $USER -f "Xtigervnc :%i" || true'
+ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i || true'
+ExecStartPre=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" || true'
 ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no -CompressionLevel 6 -QualityLevel 8
 ExecStop=/usr/bin/vncserver -kill :%i
 
