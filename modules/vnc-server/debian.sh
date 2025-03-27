@@ -58,8 +58,15 @@ sudo apt-get install -y \
 # Audio and system components
 sudo apt-get install -y \
     pulseaudio \
-    pulseaudio-utils \
-    dbus-x11
+    pulseaudio-utils
+
+# Missing recommended packages for better compatibility
+sudo apt-get install -y \
+    xdg-utils \        # For proper desktop integration
+    libnss-wrapper \   # Needed for container environments
+    xfonts-base \      # Basic X fonts
+    xfonts-100dpi \    # Additional font support
+    xfonts-75dpi
 
 # Create VNC config directory
 VNC_CONFIG_DIR="$HOME/.vnc"
@@ -77,7 +84,7 @@ unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 
 # Make sure we have a display
-export DISPLAY=:1
+export DISPLAY=:%i
 export HOME=$HOME
 
 # Force software rendering
@@ -212,7 +219,7 @@ if [[ ! -s "$VNC_CONFIG_DIR/passwd" ]]; then
 fi
 
 # Check multiple firewall backends
-VNC_PORT=5901
+VNC_PORT=$((5900 + ${VNC_DISPLAY:-1}))
 if command -v nft && systemctl is-active --quiet nftables; then
     sudo nft add rule inet filter input tcp dport $VNC_PORT counter accept
 elif command -v firewall-cmd &> /dev/null; then
@@ -232,6 +239,10 @@ cleanup() {
     pkill -U $USER -f "gnome-session" 2>/dev/null || true  # Add GNOME session cleanup
     rm -f /tmp/.X*-lock /tmp/.X11-unix/X* 2>/dev/null || true
     rm -f ~/.vnc/*.pid 2>/dev/null || true  # Clean PID files
+    # Add Wayland cleanup
+    rm -rf ${XDG_RUNTIME_DIR}/wayland-*
+    # Clear existing Xauthority
+    > ~/.Xauthority
 }
 trap cleanup EXIT
 
@@ -254,10 +265,13 @@ log_info "Stop with: systemctl --user stop vncserver@1.service"
 # Get the IP address
 IP_ADDRESS=$(hostname -I | awk '{print $1}')
 log_info "VNC server started!"
-log_info "Connect to $IP_ADDRESS:5901 using a VNC client"
+log_info "Connect to $IP_ADDRESS:$VNC_PORT using a VNC client"
 log_info "If you have issues, check the logs with: ~/view-vnc-log.sh"
-log_info "Note: Make sure your cloud provider allows incoming connections on port 5901"
+log_info "Note: Make sure your cloud provider allows incoming connections on port $VNC_PORT"
 
 # Start pulseaudio service
 systemctl --user enable pulseaudio.service
 systemctl --user start pulseaudio.service
+
+# Add dbus machine-id generation (critical for some systems)
+sudo dbus-uuidgen --ensure
