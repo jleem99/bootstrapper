@@ -113,9 +113,9 @@ dbus-run-session -- sh -c '
     mkdir -p /run/user/$(id -u)/keyring
     chmod 700 /run/user/$(id -u)/keyring
 
-    # Keyring initialization
-    /usr/bin/gnome-keyring-daemon --start --daemonize --components=pkcs11,secrets,ssh
-    export SSH_AUTH_SOCK
+    # Start GNOME keyring daemon first
+    /usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh > /dev/null 2>&1
+    export SSH_AUTH_SOCK="/run/user/$(id -u)/keyring/ssh"
 
     # X configuration
     xrdb $HOME/.Xresources
@@ -136,8 +136,8 @@ dbus-run-session -- sh -c '
     # Wait for window manager to start
     sleep 2
 
-    # Start GNOME session with non-systemd fallback
-    exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check --disable-systemd
+    # Start GNOME session
+    exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check
 '
 EOF
 
@@ -180,6 +180,9 @@ Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
 Environment="XDG_SESSION_TYPE=x11"
 Environment="GDK_BACKEND=x11"
 Environment="XDG_CURRENT_DESKTOP=GNOME"
+Environment="SSH_AUTH_SOCK=/run/user/%U/keyring/ssh"
+Environment="GNOME_KEYRING_CONTROL=/run/user/%U/keyring"
+Environment="GNOME_KEYRING_PID=/run/user/%U/keyring/keyring.pid"
 PIDFile=%h/.vnc/%H:%i.pid
 
 # Cleanup before starting
