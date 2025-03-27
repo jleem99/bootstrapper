@@ -109,8 +109,12 @@ dbus-run-session -- sh -c '
     export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
     export DBUS_SESSION_BUS_PID=$$
 
+    # Create keyring directory with proper permissions
+    mkdir -p /run/user/$(id -u)/keyring
+    chmod 700 /run/user/$(id -u)/keyring
+
     # Keyring initialization
-    eval $(/usr/bin/gnome-keyring-daemon --start --daemonize --components=pkcs11,secrets,ssh)
+    /usr/bin/gnome-keyring-daemon --start --daemonize --components=pkcs11,secrets,ssh
     export SSH_AUTH_SOCK
 
     # X configuration
@@ -132,8 +136,8 @@ dbus-run-session -- sh -c '
     # Wait for window manager to start
     sleep 2
 
-    # Start GNOME session
-    exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check
+    # Start GNOME session with non-systemd fallback
+    exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check --disable-systemd
 '
 EOF
 
@@ -173,6 +177,9 @@ Environment="HOME=%h"
 Environment="XAUTHORITY=%h/.Xauthority"
 Environment="XDG_RUNTIME_DIR=/run/user/%U"
 Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
+Environment="XDG_SESSION_TYPE=x11"
+Environment="GDK_BACKEND=x11"
+Environment="XDG_CURRENT_DESKTOP=GNOME"
 PIDFile=%h/.vnc/%H:%i.pid
 
 # Cleanup before starting
@@ -181,6 +188,7 @@ ExecStartPre=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U %U -x metacity >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U %U -x gnome-shell >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i %h/.vnc/*%i* >/dev/null 2>&1 || true'
+ExecStartPre=/bin/sh -c 'mkdir -p /run/user/%U/keyring && chmod 700 /run/user/%U/keyring'
 
 # Start VNC server
 ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 \
