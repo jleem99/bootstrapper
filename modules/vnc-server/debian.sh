@@ -15,7 +15,9 @@ sudo apt-get update
 # Core VNC server components
 sudo apt-get install -y \
     tigervnc-standalone-server \
-    tigervnc-common
+    tigervnc-common \
+    autocutsel \
+    dbus-x11
 
 # Core GNOME desktop environment
 sudo apt-get install -y \
@@ -164,7 +166,7 @@ Environment="LIBGL_ALWAYS_SOFTWARE=1"
 
 ExecStartPre=/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || :
 ExecStartPre=/bin/sh -c 'pkill -U $USER -f "Xtigervnc :%i" || :'
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no -CompressionLevel 6 -QualityLevel 8
 ExecStop=/usr/bin/vncserver -kill :%i
 
 Restart=on-failure
@@ -212,9 +214,12 @@ fi
 sudo systemctl set-default multi-user.target
 
 # Clean up any existing VNC sessions
-systemctl --user stop vncserver@1.service 2>/dev/null || true
-pkill -U $USER Xtigervnc 2>/dev/null || true
-rm -f /tmp/.X*-lock /tmp/.X11-unix/X* 2>/dev/null || true
+cleanup() {
+    systemctl --user stop vncserver@1.service 2>/dev/null || true
+    pkill -U $USER Xtigervnc 2>/dev/null || true
+    rm -f /tmp/.X*-lock /tmp/.X11-unix/X* 2>/dev/null || true
+}
+trap cleanup EXIT
 
 # Install the service properly for user services
 systemctl --user daemon-reload
