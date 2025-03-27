@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-log_info "Setting up VNC server with GNOME for Debian/Ubuntu (Might be non-ubuntu)..."
+log_info "Setting up VNC server with full GNOME desktop environment for Debian..."
 
 # Check if systemd is available
 if ! command -v systemctl &> /dev/null; then
