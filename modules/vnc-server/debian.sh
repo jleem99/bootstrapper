@@ -93,7 +93,7 @@ mkdir -p $XDG_RUNTIME_DIR
 chmod 0700 $XDG_RUNTIME_DIR
 
 # Initialize D-Bus session
-export $(dbus-launch)
+eval `dbus-launch --sh-syntax --exit-with-session`
 
 # Start keyring daemon
 eval $(/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
@@ -136,7 +136,7 @@ if [ -t 0 ]; then
     echo
 else
     VNC_PASSWORD="${VNC_PASSWORD:-$(openssl rand -base64 12)}"
-    log_info "Using random password in non-interactive mode"
+    log_info "Generated VNC password: $VNC_PASSWORD"
 fi
 echo "$VNC_PASSWORD" | vncpasswd -f > "$VNC_CONFIG_DIR/passwd"
 chmod 600 "$VNC_CONFIG_DIR/passwd"
@@ -199,6 +199,7 @@ if [[ ! -s "$VNC_CONFIG_DIR/passwd" ]]; then
 fi
 
 # Install the service properly for user services
+systemctl --user enable-linger
 systemctl --user daemon-reload
 systemctl --user enable vncserver@1.service
 systemctl --user restart vncserver@1.service
@@ -220,6 +221,3 @@ log_info "VNC server started!"
 log_info "Connect to $IP_ADDRESS:$VNC_PORT using a VNC client"
 log_info "If you have issues, check the logs with: ~/view-vnc-log.sh"
 log_info "Note: Make sure your cloud provider allows incoming connections on port $VNC_PORT"
-
-# Add after package installations
-sudo loginctl enable-linger $CURRENT_USER
