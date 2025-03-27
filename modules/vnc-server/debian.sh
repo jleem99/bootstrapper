@@ -165,7 +165,7 @@ PIDFile=${HOME}/.vnc/%H:%i.pid
 ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1 || true'
 ExecStartPre=/bin/rm -f /tmp/.X*-lock /tmp/.X11-unix/X*  # Add explicit socket cleanup
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no -CompressionLevel 6 -QualityLevel 8 -fg -noxstartup
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no -CompressionLevel 6 -QualityLevel 8
 ExecStop=/usr/bin/vncserver -kill :%i
 ExecStopPost=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1'
 ExecStopPost=/bin/sh -c 'rm -f /tmp/.X*-lock /tmp/.X11-unix/X*'  # Ensure socket cleanup
@@ -220,3 +220,6 @@ log_info "VNC server started!"
 log_info "Connect to $IP_ADDRESS:$VNC_PORT using a VNC client"
 log_info "If you have issues, check the logs with: ~/view-vnc-log.sh"
 log_info "Note: Make sure your cloud provider allows incoming connections on port $VNC_PORT"
+
+# Add after package installations
+sudo loginctl enable-linger $CURRENT_USER
