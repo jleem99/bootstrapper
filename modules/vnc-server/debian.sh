@@ -99,16 +99,19 @@ if [ ! -f $HOME/.Xauthority ]; then
     xauth add $DISPLAY . $(mcookie)
 fi
 
+# Kill any existing window managers
+pkill -x metacity || true
+pkill -x gnome-shell || true
+
 # Start fresh D-Bus session with proper initialization
 dbus-run-session -- sh -c '
+    # Set up D-Bus environment
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+    export DBUS_SESSION_BUS_PID=$$
+
     # Keyring initialization
     eval $(/usr/bin/gnome-keyring-daemon --start --daemonize --components=pkcs11,secrets,ssh)
     export SSH_AUTH_SOCK
-
-    # GNOME session components
-    if [ -x /usr/lib/gnome-settings-daemon/gnome-settings-daemon ]; then
-        /usr/lib/gnome-settings-daemon/gnome-settings-daemon &
-    fi
 
     # X configuration
     xrdb $HOME/.Xresources
@@ -118,10 +121,18 @@ dbus-run-session -- sh -c '
     vncconfig -iconic &
     autocutsel -fork
 
-    # Start window manager
+    # Start GNOME settings daemon
+    if [ -x /usr/lib/gnome-settings-daemon/gnome-settings-daemon ]; then
+        /usr/lib/gnome-settings-daemon/gnome-settings-daemon &
+    fi
+
+    # Start window manager with replace option
     metacity --replace &
 
-    # Final session execution
+    # Wait for window manager to start
+    sleep 2
+
+    # Start GNOME session
     exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check
 '
 EOF
@@ -161,11 +172,14 @@ Environment="DISPLAY=:%i"
 Environment="HOME=%h"
 Environment="XAUTHORITY=%h/.Xauthority"
 Environment="XDG_RUNTIME_DIR=/run/user/%U"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
 PIDFile=%h/.vnc/%H:%i.pid
 
 # Cleanup before starting
 ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
+ExecStartPre=/bin/sh -c 'pkill -U %U -x metacity >/dev/null 2>&1 || true'
+ExecStartPre=/bin/sh -c 'pkill -U %U -x gnome-shell >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i %h/.vnc/*%i* >/dev/null 2>&1 || true'
 
 # Start VNC server
@@ -177,6 +191,8 @@ ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 \
 # Cleanup after stopping
 ExecStop=/usr/bin/vncserver -kill :%i
 ExecStopPost=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
+ExecStopPost=/bin/sh -c 'pkill -U %U -x metacity >/dev/null 2>&1 || true'
+ExecStopPost=/bin/sh -c 'pkill -U %U -x gnome-shell >/dev/null 2>&1 || true'
 ExecStopPost=/bin/sh -c 'rm -f %h/.vnc/*%i* >/dev/null 2>&1 || true'
 
 # Process management
