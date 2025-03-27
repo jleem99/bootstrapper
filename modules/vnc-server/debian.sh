@@ -22,6 +22,7 @@ sudo apt-get install -y \
 # Core GNOME desktop environment
 sudo apt-get install -y \
     gnome-session \
+    gnome-session-bin \
     gnome-shell \
     gnome-terminal \
     gnome-control-center \
@@ -29,6 +30,17 @@ sudo apt-get install -y \
     gnome-themes-extra \
     gnome-backgrounds \
     gnome-software
+
+# Install full GNOME desktop for better experience
+sudo apt-get install -y \
+    gnome-shell-extensions \
+    gnome-shell-extension-prefs \
+    mutter \
+    gjs \
+    gnome-settings-daemon \
+    gnome-keyring \
+    gnome-user-share \
+    gdm3
 
 # GNOME applications and utilities
 sudo apt-get install -y \
@@ -80,6 +92,20 @@ export XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
 
 # Force software rendering for VNC compatibility
 export LIBGL_ALWAYS_SOFTWARE=1
+export XLIB_SKIP_ARGB_VISUALS=1
+
+# Start autocutsel for clipboard support
+autocutsel -fork -selection PRIMARY
+autocutsel -fork -selection CLIPBOARD
+
+# Ensure gnome-shell can run via software rendering
+if [ ! -e "$HOME/.config/mutter-3" ]; then
+    mkdir -p "$HOME/.config/mutter-3"
+    echo "{ \"settings\": { \"disable-hardware-acceleration\": true } }" > "$HOME/.config/mutter-3/settings.json"
+fi
+
+# Start a basic window manager as a fallback
+metacity --replace &
 
 # Start Gnome session
 exec gnome-session
@@ -114,7 +140,7 @@ After=network.target
 [Service]
 Type=simple
 ExecStartPre=-/bin/sh -c '/usr/bin/vncserver -kill :%i > /dev/null 2>&1'
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -localhost no -rfbauth $HOME/.vnc/passwd -rfbport 590%i -SecurityTypes VncAuth
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -localhost no -rfbauth $HOME/.vnc/passwd -rfbport 590%i -SecurityTypes VncAuth -extension RANDR -wm gnome-shell
 ExecStop=/usr/bin/vncserver -kill :%i
 Restart=on-failure
 RestartSec=10
@@ -141,6 +167,10 @@ fi
 
 # Clean up any existing sessions and files
 sudo rm -f /tmp/.X11-unix/X1 /tmp/.X1-lock
+
+# Clear any existing GNOME session cache
+rm -rf ~/.cache/gnome-session/
+rm -rf ~/.config/session/
 
 # Define VNC port for the log message
 VNC_PORT=5901
