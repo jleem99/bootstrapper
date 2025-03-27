@@ -163,19 +163,20 @@ Environment="HOME=${HOME}"
 PIDFile=${HOME}/.vnc/%H:%i.pid
 
 ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'rm -f /tmp/.X*-lock /tmp/.X11-unix/X* >/dev/null 2>&1 || true'  # Add explicit socket cleanup
+ExecStartPre=/bin/sh -c 'pkill -U $USER -x Xtigervnc >/dev/null 2>&1 || true'
+ExecStartPre=/bin/sh -c 'rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i >/dev/null 2>&1 || true'
 ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no
 ExecStop=/usr/bin/vncserver -kill :%i
-ExecStopPost=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1 || true'
-ExecStopPost=/bin/sh -c 'rm -f /tmp/.X*-lock /tmp/.X11-unix/X* >/dev/null 2>&1 || true'  # Ensure socket cleanup
+ExecStopPost=/bin/sh -c 'pkill -U $USER -x Xtigervnc >/dev/null 2>&1 || true'
+ExecStopPost=/bin/sh -c 'rm -f ${HOME}/.vnc/*%i* >/dev/null 2>&1 || true'
 
 # Add process killing protections
-KillMode=process
+KillMode=mixed
 KillSignal=SIGINT
-TimeoutStopSec=5
+TimeoutStartSec=30
+TimeoutStopSec=15
 Restart=on-failure
-RestartSec=5
+RestartSec=10s
 RemainAfterExit=no
 
 [Install]
