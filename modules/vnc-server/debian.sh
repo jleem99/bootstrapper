@@ -72,6 +72,8 @@ touch $HOME/.Xresources
 # Clean any previous sessions
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
+unset GNOME_KEYRING_CONTROL
+unset SSH_AUTH_SOCK
 
 # Make sure we have a display
 export DISPLAY=:1
@@ -99,23 +101,16 @@ if [ ! -f $HOME/.Xauthority ]; then
     xauth add $DISPLAY . $(mcookie)
 fi
 
-# Kill any existing window managers
+# Kill any existing window managers and processes
 pkill -x metacity || true
 pkill -x gnome-shell || true
+pkill -x gnome-keyring-daemon || true
 
 # Start fresh D-Bus session with proper initialization
 dbus-run-session -- sh -c '
     # Set up D-Bus environment
     export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
     export DBUS_SESSION_BUS_PID=$$
-
-    # Create keyring directory with proper permissions
-    mkdir -p /run/user/$(id -u)/keyring
-    chmod 700 /run/user/$(id -u)/keyring
-
-    # Start GNOME keyring daemon first
-    /usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh > /dev/null 2>&1
-    export SSH_AUTH_SOCK="/run/user/$(id -u)/keyring/ssh"
 
     # X configuration
     xrdb $HOME/.Xresources
@@ -136,7 +131,7 @@ dbus-run-session -- sh -c '
     # Wait for window manager to start
     sleep 2
 
-    # Start GNOME session
+    # Start GNOME session without keyring
     exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check
 '
 EOF
@@ -180,9 +175,6 @@ Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
 Environment="XDG_SESSION_TYPE=x11"
 Environment="GDK_BACKEND=x11"
 Environment="XDG_CURRENT_DESKTOP=GNOME"
-Environment="SSH_AUTH_SOCK=/run/user/%U/keyring/ssh"
-Environment="GNOME_KEYRING_CONTROL=/run/user/%U/keyring"
-Environment="GNOME_KEYRING_PID=/run/user/%U/keyring/keyring.pid"
 PIDFile=%h/.vnc/%H:%i.pid
 
 # Cleanup before starting
@@ -190,8 +182,8 @@ ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U %U -x metacity >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U %U -x gnome-shell >/dev/null 2>&1 || true'
+ExecStartPre=/bin/sh -c 'pkill -U %U -x gnome-keyring-daemon >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i %h/.vnc/*%i* >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'mkdir -p /run/user/%U/keyring && chmod 700 /run/user/%U/keyring'
 
 # Start VNC server
 ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 \
@@ -204,6 +196,7 @@ ExecStop=/usr/bin/vncserver -kill :%i
 ExecStopPost=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
 ExecStopPost=/bin/sh -c 'pkill -U %U -x metacity >/dev/null 2>&1 || true'
 ExecStopPost=/bin/sh -c 'pkill -U %U -x gnome-shell >/dev/null 2>&1 || true'
+ExecStopPost=/bin/sh -c 'pkill -U %U -x gnome-keyring-daemon >/dev/null 2>&1 || true'
 ExecStopPost=/bin/sh -c 'rm -f %h/.vnc/*%i* >/dev/null 2>&1 || true'
 
 # Process management
@@ -239,7 +232,11 @@ fi
 sudo chown -R $USER:$USER $HOME
 sudo rm -f /tmp/.X11-unix/X1 /tmp/.X1-lock
 rm -rf ~/.vnc/*.log ~/.cache/*
+pkill -U $USER -x gnome-keyring-daemon || true
 export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+
+# Define VNC port for the log message
+VNC_PORT=5901
 
 # Install the service properly for user services
 systemctl --user daemon-reload
