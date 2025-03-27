@@ -202,6 +202,9 @@ rm -rf ~/.cache/gnome-session/
 rm -rf ~/.config/session/
 rm -rf ~/.config/dconf/
 
+# Kill any existing VNC servers
+vncserver -kill :1 >/dev/null 2>&1 || true
+
 # Ensure VNC user directories exist with correct permissions
 mkdir -p /run/user/$(id -u)/
 sudo chmod 700 /run/user/$(id -u)/
@@ -223,6 +226,26 @@ X-GDM-BypassXsession=true
 X-GNOME-WMName=Metacity
 EOF
 
+# Create backup VNC start script
+cat > ~/start-vnc.sh << 'EOF'
+#!/bin/bash
+# Kill any existing VNC servers
+vncserver -kill :1 >/dev/null 2>&1 || true
+
+# Start VNC server with basic settings
+vncserver :1 -geometry 1920x1080 -depth 24 -localhost no -rfbauth ~/.vnc/passwd -SecurityTypes VncAuth
+
+echo "VNC server started. Connect to $(hostname -I | awk '{print $1}'):5901"
+echo "To view logs, run: ~/view-vnc-log.sh"
+EOF
+chmod +x ~/start-vnc.sh
+
+# Check available GNOME sessions
+log_info "Available GNOME sessions:"
+find /usr/share/gnome-session/sessions/ -name "*.session" | while read -r session; do
+  echo "  - $(basename "$session" .session)"
+done
+
 # Create .xinitrc to ensure proper X startup
 cat > ~/.xinitrc << 'EOF'
 #!/bin/bash
@@ -236,7 +259,7 @@ touch ~/.local/share/systemd/user/vncserver@.service
 
 # Create a system-wide VNC configuration file
 sudo mkdir -p /etc/tigervnc
-sudo cat > /etc/tigervnc/vncserver-config-defaults << 'EOF'
+cat << 'EOF' > /tmp/vncserver-config-defaults
 session=gnome-xorg
 securitytypes=vncauth
 desktop=GNOME Desktop
@@ -244,6 +267,7 @@ geometry=1920x1080
 localhost=0
 alwaysshared=1
 EOF
+sudo mv /tmp/vncserver-config-defaults /etc/tigervnc/vncserver-config-defaults
 
 # Define VNC port for the log message
 VNC_PORT=5901
@@ -257,6 +281,24 @@ systemctl --user restart vncserver@1.service
 sleep 3
 if ! systemctl --user is-active --quiet vncserver@1.service; then
     log_error "Service failed to start!"
+    log_error "Checking logs..."
+    
+    # Check if journalctl is available and show logs
+    if command -v journalctl >/dev/null 2>&1; then
+        journalctl --user-unit vncserver@1.service -n 50 --no-pager
+    fi
+    
+    # Also check VNC logs directly
+    LATEST_LOG=$(find ~/.vnc -name "*.log" -type f -printf "%T@ %p\n" | sort -nr | head -1 | cut -d' ' -f2-)
+    if [ -n "$LATEST_LOG" ]; then
+        log_error "Latest VNC log content:"
+        tail -n 30 "$LATEST_LOG"
+    fi
+    
+    # Try starting with basic X session as a fallback
+    log_info "Trying fallback VNC session..."
+    vncserver :1 -geometry 1920x1080 -depth 24 -localhost no -rfbauth $HOME/.vnc/passwd -SecurityTypes VncAuth
+    
     exit 1
 fi
 
