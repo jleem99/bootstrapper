@@ -228,8 +228,10 @@ sudo systemctl set-default multi-user.target
 # Clean up any existing VNC sessions
 cleanup() {
     systemctl --user stop vncserver@1.service 2>/dev/null || true
-    pkill -U $USER Xtigervnc 2>/dev/null || true
+    pkill -U $USER -f "Xtigervnc" 2>/dev/null || true
+    pkill -U $USER -f "gnome-session" 2>/dev/null || true  # Add GNOME session cleanup
     rm -f /tmp/.X*-lock /tmp/.X11-unix/X* 2>/dev/null || true
+    rm -f ~/.vnc/*.pid 2>/dev/null || true  # Clean PID files
 }
 trap cleanup EXIT
 
