@@ -157,24 +157,32 @@ cat > ~/.config/systemd/user/vncserver@.service << EOF
 [Unit]
 Description=Remote desktop service (VNC)
 After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
-Type=simple
+Type=forking
 WorkingDirectory=${HOME}
 Environment="DISPLAY=:%i"
 Environment="HOME=${HOME}"
 Environment="LIBGL_ALWAYS_SOFTWARE=1"
+PIDFile=${HOME}/.vnc/%H:%i.pid
 
 ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
 ExecStartPre=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1 || true'
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no -CompressionLevel 6 -QualityLevel 8 -fg
+ExecStartPre=/bin/rm -f /tmp/.X*-lock /tmp/.X11-unix/X*  # Add explicit socket cleanup
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no -CompressionLevel 6 -QualityLevel 8 -fg -noxstartup
 ExecStop=/usr/bin/vncserver -kill :%i
-ExecStopPost=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1 || true'
+ExecStopPost=/bin/sh -c 'pkill -U \$USER -f "Xtigervnc :%i" >/dev/null 2>&1'
+ExecStopPost=/bin/sh -c 'rm -f /tmp/.X*-lock /tmp/.X11-unix/X*'  # Ensure socket cleanup
 
-Restart=always
+# Add process killing protections
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStopSec=20
+Restart=on-failure
 RestartSec=5
-TimeoutStopSec=10
-RemainAfterExit=yes
+RemainAfterExit=no
 
 [Install]
 WantedBy=default.target
