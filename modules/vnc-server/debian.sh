@@ -199,7 +199,6 @@ if [[ ! -s "$VNC_CONFIG_DIR/passwd" ]]; then
 fi
 
 # Install the service properly for user services
-systemctl --user enable-linger
 systemctl --user daemon-reload
 systemctl --user enable vncserver@1.service
 systemctl --user restart vncserver@1.service
