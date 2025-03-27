@@ -74,7 +74,7 @@ unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 
 # Make sure we have a display
-export DISPLAY=:%i
+export DISPLAY=:1
 export HOME=$HOME
 
 # Force software rendering
@@ -92,39 +92,38 @@ export XDG_RUNTIME_DIR=/run/user/$(id -u)
 mkdir -p $XDG_RUNTIME_DIR
 chmod 0700 $XDG_RUNTIME_DIR
 
-# Initialize D-Bus session
-eval `dbus-launch --sh-syntax --exit-with-session`
-
-# Start keyring daemon
-eval $(/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh)
-export SSH_AUTH_SOCK
-
-# Start X configuration
-xrdb $HOME/.Xresources
-xsetroot -solid grey
-
-# Start VNC config utility
-vncconfig -iconic &
-
-# Enable clipboard
-autocutsel -fork
-
-# Sleep to ensure window manager is up
-sleep 2
-
-# Start GNOME settings daemon
-if [ -x /usr/lib/gnome-settings-daemon/gnome-settings-daemon ]; then
-    /usr/lib/gnome-settings-daemon/gnome-settings-daemon &
-elif [ -x /usr/libexec/gnome-settings-daemon ]; then
-    /usr/libexec/gnome-settings-daemon &
+# Initialize X authority
+if [ ! -f $HOME/.Xauthority ]; then
+    touch $HOME/.Xauthority
+    chmod 600 $HOME/.Xauthority
+    xauth add $DISPLAY . $(mcookie)
 fi
 
-# Add to xstartup
-export CLUTTER_BACKEND=software
-export GDK_GL=disabled
+# Start fresh D-Bus session with proper initialization
+dbus-run-session -- sh -c '
+    # Keyring initialization
+    eval $(/usr/bin/gnome-keyring-daemon --start --daemonize --components=pkcs11,secrets,ssh)
+    export SSH_AUTH_SOCK
 
-# Launch GNOME fallback mode directly
-exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check
+    # GNOME session components
+    if [ -x /usr/lib/gnome-settings-daemon/gnome-settings-daemon ]; then
+        /usr/lib/gnome-settings-daemon/gnome-settings-daemon &
+    fi
+
+    # X configuration
+    xrdb $HOME/.Xresources
+    xsetroot -solid grey
+
+    # VNC components
+    vncconfig -iconic &
+    autocutsel -fork
+
+    # Start window manager
+    metacity --replace &
+
+    # Final session execution
+    exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check
+'
 EOF
 
 # Make the xstartup file executable
@@ -157,20 +156,30 @@ StartLimitBurst=5
 
 [Service]
 Type=forking
-WorkingDirectory=${HOME}
+WorkingDirectory=%h
 Environment="DISPLAY=:%i"
-Environment="HOME=${HOME}"
-PIDFile=${HOME}/.vnc/%H:%i.pid
+Environment="HOME=%h"
+Environment="XAUTHORITY=%h/.Xauthority"
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
+PIDFile=%h/.vnc/%H:%i.pid
 
+# Cleanup before starting
 ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'pkill -U $USER -x Xtigervnc >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i >/dev/null 2>&1 || true'
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -rfbauth ${HOME}/.vnc/passwd -localhost no
-ExecStop=/usr/bin/vncserver -kill :%i
-ExecStopPost=/bin/sh -c 'pkill -U $USER -x Xtigervnc >/dev/null 2>&1 || true'
-ExecStopPost=/bin/sh -c 'rm -f ${HOME}/.vnc/*%i* >/dev/null 2>&1 || true'
+ExecStartPre=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
+ExecStartPre=/bin/sh -c 'rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i %h/.vnc/*%i* >/dev/null 2>&1 || true'
 
-# Add process killing protections
+# Start VNC server
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 \
+    -rfbauth %h/.vnc/passwd \
+    -localhost no \
+    -Log *:stderr:100
+
+# Cleanup after stopping
+ExecStop=/usr/bin/vncserver -kill :%i
+ExecStopPost=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
+ExecStopPost=/bin/sh -c 'rm -f %h/.vnc/*%i* >/dev/null 2>&1 || true'
+
+# Process management
 KillMode=mixed
 KillSignal=SIGINT
 TimeoutStartSec=30
@@ -198,6 +207,12 @@ if [[ ! -s "$VNC_CONFIG_DIR/passwd" ]]; then
   echo "vncserver" | vncpasswd -f > "$VNC_CONFIG_DIR/passwd"
   chmod 600 "$VNC_CONFIG_DIR/passwd"
 fi
+
+# Clean up any existing sessions and files
+sudo chown -R $USER:$USER $HOME
+sudo rm -f /tmp/.X11-unix/X1 /tmp/.X1-lock
+rm -rf ~/.vnc/*.log ~/.cache/*
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 
 # Install the service properly for user services
 systemctl --user daemon-reload
