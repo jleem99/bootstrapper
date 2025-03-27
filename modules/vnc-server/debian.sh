@@ -242,7 +242,8 @@ cleanup() {
     # Add Wayland cleanup
     rm -rf ${XDG_RUNTIME_DIR}/wayland-*
     # Clear existing Xauthority
-    > ~/.Xauthority
+    rm -f ~/.Xauthority
+    touch ~/.Xauthority
 }
 trap cleanup EXIT
 
