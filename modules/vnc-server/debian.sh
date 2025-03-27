@@ -57,8 +57,18 @@ sudo apt-get install -y \
 
 # Audio and system components
 sudo apt-get install -y \
+    pipewire \
     pipewire-pulse \
+    wireplumber \
     dbus-x11
+
+# If pipewire installation fails, fallback to pulseaudio
+if ! systemctl --user is-active --quiet pipewire.service; then
+    log_info "Pipewire installation failed, falling back to pulseaudio..."
+    sudo apt-get install -y \
+        pulseaudio \
+        pulseaudio-utils
+fi
 
 # Create VNC config directory
 VNC_CONFIG_DIR="$HOME/.vnc"
