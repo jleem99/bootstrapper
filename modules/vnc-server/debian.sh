@@ -64,76 +64,25 @@ mkdir -p "$VNC_CONFIG_DIR"
 
 # Create a xstartup file for GNOME with software rendering
 cat > "$VNC_CONFIG_DIR/xstartup" << 'EOF'
-#!/bin/sh
+#!/bin/bash
 
-# Create empty .Xresources if it doesn't exist to avoid errors
-touch $HOME/.Xresources
-
-# Clean any previous sessions
+# Uncomment the following two lines for normal desktop:
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
-unset GNOME_KEYRING_CONTROL
-unset SSH_AUTH_SOCK
 
-# Make sure we have a display
-export DISPLAY=:1
-export HOME=$HOME
-
-# Force software rendering
-export LIBGL_ALWAYS_SOFTWARE=1
-export MESA_GL_VERSION_OVERRIDE=3.3
-export MESA_GLSL_VERSION_OVERRIDE=330
-
-# Set required environment variables
+# Set up environment
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
-export XDG_CURRENT_DESKTOP="GNOME"
+export DESKTOP_SESSION=gnome
+export GNOME_SHELL_SESSION_MODE=ubuntu
+export XDG_CURRENT_DESKTOP=GNOME
+export XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
 
-# Add to environment variables
-export XDG_RUNTIME_DIR=/run/user/$(id -u)
-mkdir -p $XDG_RUNTIME_DIR
-chmod 0700 $XDG_RUNTIME_DIR
+# Force software rendering for better compatibility
+export LIBGL_ALWAYS_SOFTWARE=1
 
-# Initialize X authority
-if [ ! -f $HOME/.Xauthority ]; then
-    touch $HOME/.Xauthority
-    chmod 600 $HOME/.Xauthority
-    xauth add $DISPLAY . $(mcookie)
-fi
-
-# Kill any existing window managers and processes
-pkill -x metacity || true
-pkill -x gnome-shell || true
-pkill -x gnome-keyring-daemon || true
-
-# Start fresh D-Bus session with proper initialization
-dbus-run-session -- sh -c '
-    # Set up D-Bus environment
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
-    export DBUS_SESSION_BUS_PID=$$
-
-    # X configuration
-    xrdb $HOME/.Xresources
-    xsetroot -solid grey
-
-    # VNC components
-    vncconfig -iconic &
-    autocutsel -fork
-
-    # Start GNOME settings daemon
-    if [ -x /usr/lib/gnome-settings-daemon/gnome-settings-daemon ]; then
-        /usr/lib/gnome-settings-daemon/gnome-settings-daemon &
-    fi
-
-    # Start window manager with replace option
-    metacity --replace &
-
-    # Wait for window manager to start
-    sleep 2
-
-    # Start GNOME session without keyring
-    exec gnome-session --session=gnome-flashback-metacity --disable-acceleration-check
-'
+# Start GNOME Session
+exec gnome-session
 EOF
 
 # Make the xstartup file executable
@@ -161,52 +110,13 @@ cat > ~/.config/systemd/user/vncserver@.service << EOF
 [Unit]
 Description=Remote desktop service (VNC)
 After=network.target
-StartLimitIntervalSec=60
-StartLimitBurst=5
 
 [Service]
-Type=forking
-WorkingDirectory=%h
-Environment="DISPLAY=:%i"
-Environment="HOME=%h"
-Environment="XAUTHORITY=%h/.Xauthority"
-Environment="XDG_RUNTIME_DIR=/run/user/%U"
-Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
-Environment="XDG_SESSION_TYPE=x11"
-Environment="GDK_BACKEND=x11"
-Environment="XDG_CURRENT_DESKTOP=GNOME"
-PIDFile=%h/.vnc/%H:%i.pid
-
-# Cleanup before starting
-ExecStartPre=/bin/sh -c '/usr/bin/vncserver -kill :%i >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'pkill -U %U -x metacity >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'pkill -U %U -x gnome-shell >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'pkill -U %U -x gnome-keyring-daemon >/dev/null 2>&1 || true'
-ExecStartPre=/bin/sh -c 'rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i %h/.vnc/*%i* >/dev/null 2>&1 || true'
-
-# Start VNC server
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 \
-    -rfbauth %h/.vnc/passwd \
-    -localhost no \
-    -Log *:stderr:100
-
-# Cleanup after stopping
+Type=simple
+ExecStartPre=/bin/sh -c 'mkdir -p ~/.vnc/logs'
+ExecStartPre=-/bin/sh -c '/usr/bin/vncserver -kill :%i > /dev/null 2>&1'
+ExecStart=/usr/bin/vncserver :%i -localhost no -geometry 1920x1080 -depth 24 -rfbauth $HOME/.vnc/passwd
 ExecStop=/usr/bin/vncserver -kill :%i
-ExecStopPost=/bin/sh -c 'pkill -U %U -x Xtigervnc >/dev/null 2>&1 || true'
-ExecStopPost=/bin/sh -c 'pkill -U %U -x metacity >/dev/null 2>&1 || true'
-ExecStopPost=/bin/sh -c 'pkill -U %U -x gnome-shell >/dev/null 2>&1 || true'
-ExecStopPost=/bin/sh -c 'pkill -U %U -x gnome-keyring-daemon >/dev/null 2>&1 || true'
-ExecStopPost=/bin/sh -c 'rm -f %h/.vnc/*%i* >/dev/null 2>&1 || true'
-
-# Process management
-KillMode=mixed
-KillSignal=SIGINT
-TimeoutStartSec=30
-TimeoutStopSec=15
-Restart=on-failure
-RestartSec=10s
-RemainAfterExit=no
 
 [Install]
 WantedBy=default.target
@@ -229,11 +139,7 @@ if [[ ! -s "$VNC_CONFIG_DIR/passwd" ]]; then
 fi
 
 # Clean up any existing sessions and files
-sudo chown -R $USER:$USER $HOME
 sudo rm -f /tmp/.X11-unix/X1 /tmp/.X1-lock
-rm -rf ~/.vnc/*.log ~/.cache/*
-pkill -U $USER -x gnome-keyring-daemon || true
-export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 
 # Define VNC port for the log message
 VNC_PORT=5901
