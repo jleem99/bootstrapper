@@ -60,14 +60,6 @@ sudo apt-get install -y \
     pulseaudio \
     pulseaudio-utils
 
-# Missing recommended packages for better compatibility
-sudo apt-get install -y \
-    xdg-utils \        # For proper desktop integration
-    libnss-wrapper \   # Needed for container environments
-    xfonts-base \      # Basic X fonts
-    xfonts-100dpi \    # Additional font support
-    xfonts-75dpi
-
 # Create VNC config directory
 VNC_CONFIG_DIR="$HOME/.vnc"
 mkdir -p "$VNC_CONFIG_DIR"
