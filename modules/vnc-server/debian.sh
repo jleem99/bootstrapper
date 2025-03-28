@@ -118,9 +118,10 @@ else
     VNC_PASSWORD="${VNC_PASSWORD:-$(openssl rand -base64 12)}"
     log_info "Generated VNC password: $VNC_PASSWORD"
 fi
-echo "$VNC_PASSWORD" | vncpasswd -f > "/tmp/$VNC_CONFIG_DIR/passwd"
-chmod 600 "/tmp/$VNC_CONFIG_DIR/passwd"
-sudo mv "/tmp/$VNC_CONFIG_DIR/passwd" "$VNC_CONFIG_DIR/passwd"
+TEMP_PASSWD="$(mktemp)"
+echo "$VNC_PASSWORD" | vncpasswd -f > "$TEMP_PASSWD"
+chmod 600 "$TEMP_PASSWD"
+sudo mv "$TEMP_PASSWD" "$VNC_CONFIG_DIR/passwd"
 
 # Create systemd service file
 sudo tee /etc/systemd/system/vncserver@.service << EOF
