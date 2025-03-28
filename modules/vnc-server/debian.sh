@@ -9,7 +9,6 @@ if ! command -v systemctl &> /dev/null; then
   exit 1
 fi
 
-# Install TigerVNC server and GNOME desktop components
 sudo apt-get update
 
 # Core VNC server components
@@ -22,7 +21,6 @@ sudo apt-get install -y \
 # Core GNOME desktop environment
 sudo apt-get install -y \
     gnome-session \
-    gnome-session-bin \
     gnome-shell \
     gnome-terminal \
     gnome-control-center \
@@ -39,18 +37,13 @@ sudo apt-get install -y \
     gnome-shell-extensions \
     gnome-shell-extension-prefs \
     mutter \
-    gjs \
     gnome-settings-daemon \
     gnome-keyring \
     gnome-user-share
 
-# Add basic GNOME panel for fallback if needed
-sudo apt-get install -y gnome-panel
-
 # Add enhanced GL support and fix missing libraries
 sudo apt-get install -y \
     mesa-utils \
-    mesa-utils-extra \
     libgl1-mesa-dri \
     libgl1-mesa-glx \
     libglx-mesa0 \
@@ -74,14 +67,9 @@ sudo apt-get install -y \
     xauth \
     x11-xserver-utils
 
-# Window manager and session components
-sudo apt-get install -y \
-    metacity
-
 # Audio and system components
 sudo apt-get install -y \
-    pulseaudio \
-    pulseaudio-utils
+    pulseaudio
 
 # Create system-wide VNC config directory
 VNC_CONFIG_DIR="/etc/vnc"
@@ -94,10 +82,6 @@ sudo tee "$VNC_CONFIG_DIR/xstartup" << 'EOF'
 # Standard session cleanup
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
-
-# Ensure Xauthority file exists
-touch /root/.Xauthority
-chmod 600 /root/.Xauthority
 
 # Set up NVIDIA OpenGL environment
 export LIBGL_ALWAYS_INDIRECT=1
@@ -156,8 +140,6 @@ ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24 -localhost no -rf
 ExecStop=/usr/bin/vncserver -kill :%i
 Restart=on-failure
 RestartSec=10
-Environment=XDG_SESSION_TYPE=x11
-Environment=DISPLAY=:1
 
 [Install]
 WantedBy=multi-user.target
