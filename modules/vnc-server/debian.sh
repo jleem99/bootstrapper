@@ -41,15 +41,6 @@ sudo apt-get install -y \
     gnome-keyring \
     gnome-user-share
 
-# Add enhanced GL support and fix missing libraries
-sudo apt-get install -y \
-    mesa-utils \
-    libgl1-mesa-dri \
-    libgl1-mesa-glx \
-    libglx-mesa0 \
-    libegl1-mesa \
-    libgles2-mesa
-
 # GNOME applications and utilities
 sudo apt-get install -y \
     nautilus \
@@ -84,14 +75,16 @@ unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 
 # Set up NVIDIA OpenGL environment
-export LIBGL_ALWAYS_INDIRECT=1
+export LD_LIBRARY_PATH=/usr/lib/nvidia:/usr/lib/x86_64-linux-gnu:/usr/lib:$LD_LIBRARY_PATH
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
+export LIBGL_ALWAYS_INDIRECT=0  # Disable indirect rendering
 
 # Set GNOME environment variables
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
-export DESKTOP_SESSION=gnome
 export XDG_CURRENT_DESKTOP=GNOME
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+mkdir -p $XDG_RUNTIME_DIR && chmod 0700 $XDG_RUNTIME_DIR
 
 # Setup dbus
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
