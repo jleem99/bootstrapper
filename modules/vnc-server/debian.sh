@@ -76,7 +76,7 @@ VNC_CONFIG_DIR="/etc/vnc"
 sudo mkdir -p "$VNC_CONFIG_DIR"
 
 # Create a xstartup file for GNOME with software rendering
-sudo tee "$VNC_CONFIG_DIR/xstartup" << 'EOF'
+sudo tee "$VNC_CONFIG_DIR/xstartup" > /dev/null << 'EOF'
 #!/bin/bash
 
 # Standard session cleanup
