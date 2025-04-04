@@ -41,6 +41,15 @@ sudo apt-get install -y \
     gnome-keyring \
     gnome-user-share
 
+# Add enhanced GL support and fix missing libraries
+sudo apt-get install -y \
+    mesa-utils \
+    libgl1-mesa-dri \
+    libgl1-mesa-glx \
+    libglx-mesa0 \
+    libegl1-mesa \
+    libgles2-mesa
+
 # GNOME applications and utilities
 sudo apt-get install -y \
     nautilus \
