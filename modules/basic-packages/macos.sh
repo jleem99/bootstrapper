@@ -14,4 +14,5 @@ install_packages \
   curl \
   tmux \
   neovim \
-  htop
+  htop \
+  dua-cli
