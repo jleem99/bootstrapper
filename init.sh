@@ -34,5 +34,7 @@ fi
 add_to_path "$BIN_DIR"
 
 log_success "Bootstrapper initialized successfully!"
-log_info "You can now run:"
+log_info "To start using bootstrapper immediately, run:"
+log_info "  source $(get_shell_profile)"
+log_info "Or restart your terminal, then run:"
 log_info "  bootstrapper help" 

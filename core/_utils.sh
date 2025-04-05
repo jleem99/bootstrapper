@@ -31,9 +31,6 @@ add_to_path() {
   local shell="${2:-$(get_current_shell)}"
   local profile="${3:-$(get_shell_profile "$shell")}"
 
-  # Temporarily add to PATH
-  export PATH="$bin_dir:$PATH"
-
   log_info "Adding $bin_dir to \$PATH in $profile"
   
   case "$shell" in
