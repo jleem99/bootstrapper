@@ -1,9 +1,13 @@
 #!/bin/bash
 set -eu
 
+get_current_shell() {
+  echo "$(basename "$SHELL")"
+}
+
 # Function to get shell profile file
 get_shell_profile() {
-  local shell="${1:-$(basename "$SHELL")}"
+  local shell="${1:-$(get_current_shell)}"
   case "$shell" in
     "bash")
       echo "$HOME/.bashrc"
@@ -23,8 +27,8 @@ get_shell_profile() {
 
 # Function to add to PATH
 add_to_path() {
-  local shell="$1"
-  local bin_dir="$2"
+  local bin_dir="$1"
+  local shell="${2:-$(get_current_shell)}"
   local profile="${3:-$(get_shell_profile "$shell")}"
 
   log_info "Adding $bin_dir to \$PATH in $profile"
@@ -43,5 +47,6 @@ add_to_path() {
   esac
 }
 
+export -f get_current_shell
 export -f get_shell_profile
 export -f add_to_path

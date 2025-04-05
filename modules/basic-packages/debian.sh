@@ -22,4 +22,7 @@ curl -LSfs https://raw.githubusercontent.com/Byron/dua-cli/master/ci/install.sh 
 
 # Add dua-cli to PATH
 echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $(get_shell_profile)
+
+set +u
 source $(get_shell_profile)
+set -u
