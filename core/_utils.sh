@@ -3,7 +3,7 @@ set -eu
 
 # Function to get shell profile file
 get_shell_profile() {
-  local shell="$1"
+  local shell="${1:-$(basename "$SHELL")}"
   case "$shell" in
     "bash")
       echo "$HOME/.bashrc"
