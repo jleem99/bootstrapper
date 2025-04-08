@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 log_info "Setting up VNC server with full GNOME desktop environment for Debian..."
 

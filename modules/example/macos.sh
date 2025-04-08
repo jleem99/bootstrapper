@@ -1,4 +1,4 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 log_info "Example module for macOS"

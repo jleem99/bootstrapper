@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 # Function to check if a module is supported on the current platform
 # This eliminates the need for each module to check platform support individually

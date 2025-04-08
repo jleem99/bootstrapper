@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 get_current_shell() {
   echo "$(basename "$SHELL")"

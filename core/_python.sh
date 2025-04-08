@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 # Install pip packages
 # Usage: install_pip_packages pkg1 pkg2 pkg3 ...

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 # Function to update the package manager
 # Usage: update_package_manager

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Get the actual location of the bootstrapper script
 BOOTSTRAPPER_ROOT="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 # Source required utilities
 source "$BOOTSTRAPPER_ROOT/core/_logging.sh"

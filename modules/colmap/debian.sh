@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 echo "Installing COLMAP for Debian/Ubuntu..."
 

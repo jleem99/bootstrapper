@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 # Source platform detection if PLATFORM is not set
 if [[ -z "$PLATFORM" ]]; then

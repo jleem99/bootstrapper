@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -euo pipefail
 
 # Platform detection module for bootstrapper
 # This will be sourced by other modules to detect the platform and package manager
