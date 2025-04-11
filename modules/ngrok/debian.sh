@@ -11,7 +11,7 @@ curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
 log_info "ngrok installed successfully!"
 
 # Create 'ngrok' user with home directory
-sudo useradd -r -s /bin/false ngrok
+sudo useradd -r -m -s /bin/false ngrok
 
 # Create ngrok directory
 sudo mkdir -p /opt/ngrok
@@ -20,10 +20,8 @@ sudo chown -R ngrok:ngrok /opt/ngrok
 # Read auth token from user
 read -s -p "Enter your ngrok auth token: " NGROK_AUTH_TOKEN
 
-NGROK_CONFIG_FILE="/opt/ngrok/ngrok.yml"
-
 # Set auth token
-sudo -u ngrok ngrok config --config=$NGROK_CONFIG_FILE add-authtoken $NGROK_AUTH_TOKEN
+sudo -u ngrok ngrok config add-authtoken $NGROK_AUTH_TOKEN
 
 log_success "ngrok auth token set successfully!"
 
@@ -36,7 +34,7 @@ After=network.target
 [Service]
 User=ngrok
 Group=ngrok
-ExecStart=/usr/local/bin/ngrok tcp 22 --config=$NGROK_CONFIG_FILE
+ExecStart=/usr/local/bin/ngrok tcp 22
 Restart=always
 RestartSec=10
 
