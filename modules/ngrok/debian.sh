@@ -8,7 +8,7 @@ curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
   && sudo apt update \
   && sudo apt install ngrok
 
-log_success "ngrok installed successfully!"
+log_info "ngrok installed successfully!"
 
 # Create 'ngrok' user with home directory
 sudo useradd -r -m -s /bin/false ngrok
