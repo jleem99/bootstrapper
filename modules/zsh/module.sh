@@ -18,6 +18,10 @@ sed -i 's/^plugins=(/plugins=(zsh-syntax-highlighting /' ~/.zshrc
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 sed -i 's/^plugins=(/plugins=(zsh-autosuggestions /' ~/.zshrc
 
+# Setup tmux autostart
+sed -i '1iZSH_TMUX_AUTOSTART=true' ~/.zshrc
+sed -i 's/^plugins=(/plugins=(tmux /' ~/.zshrc
+
 # Add bootstrapper to PATH
 BIN_DIR="$HOME/.local/bin"
 
