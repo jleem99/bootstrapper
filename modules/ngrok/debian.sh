@@ -10,8 +10,8 @@ curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
 
 log_success "ngrok installed successfully!"
 
-# Create 'ngrok' user
-sudo useradd -r -s /bin/false ngrok
+# Create 'ngrok' user with home directory
+sudo useradd -r -m -s /bin/false ngrok
 
 # Create ngrok directory
 sudo mkdir -p /opt/ngrok
