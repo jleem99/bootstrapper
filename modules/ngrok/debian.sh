@@ -23,7 +23,7 @@ read -s -p "Enter your ngrok auth token: " NGROK_AUTH_TOKEN
 # Set auth token
 sudo -u ngrok ngrok config add-authtoken $NGROK_AUTH_TOKEN
 
-log_success "ngrok auth token set successfully!"
+log_info "ngrok auth token set successfully!"
 
 # Create systemd service
 sudo tee /etc/systemd/system/ngrok.service >/dev/null <<EOF

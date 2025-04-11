@@ -22,6 +22,6 @@ sed -i 's/^plugins=(/plugins=(zsh-autosuggestions /' ~/.zshrc
 BIN_DIR="$HOME/.local/bin"
 
 # Add to PATH
-add_to_path "zsh" "$BIN_DIR"
+add_to_path "$BIN_DIR" zsh
 
 log_success "zsh module completed successfully!"
