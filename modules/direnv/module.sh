@@ -7,6 +7,7 @@ install_packages "direnv"
 
 log_success "Direnv installed successfully!"
 
+mkdir -p ~/.config/direnv
 cat <<'EOF' > ~/.config/direnv/direnvrc
 # layout for conda environments
 layout_conda() {
