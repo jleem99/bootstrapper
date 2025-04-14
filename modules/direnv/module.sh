@@ -28,6 +28,8 @@ layout_conda() {
 }
 EOF
 
+echo "direnv hook $(get_current_shell)" >> "$(get_shell_profile)"
+
 log_success "Direnv configuration added to ~/.config/direnv/direnvrc"
 
 log_success "Direnv module completed successfully!" 
