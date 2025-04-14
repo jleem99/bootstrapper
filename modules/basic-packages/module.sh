@@ -6,6 +6,10 @@ log_info "Installing basic packages..."
 # Run platform-specific implementation
 module_run_platform "basic-packages"
 
+# Configure tmux
+log_info "Configuring tmux..."
+echo 'setw -g mouse on' >> ~/.tmux.conf
+
 # Setup neovim
 log_info "Setting up neovim..."
 
