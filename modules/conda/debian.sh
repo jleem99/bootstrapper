@@ -5,11 +5,13 @@ log_info "Installing Conda for Debian/Ubuntu"
 
 ensure_packages_installed "wget"
 
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+TEMP_DIR=$(mktemp -d)
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O "$TEMP_DIR/Miniconda3-latest-Linux-x86_64.sh"
 
 export PREFIX="$HOME/miniconda3"
 
-bash Miniconda3-latest-Linux-x86_64.sh
+bash "$TEMP_DIR/Miniconda3-latest-Linux-x86_64.sh"
 
 # Initialize Conda for the current shell
 log_info "Initializing Conda..."

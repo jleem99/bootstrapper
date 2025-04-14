@@ -5,11 +5,13 @@ log_info "Installing Conda for macOS"
 
 ensure_packages_installed "curl"
 
-curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
+TEMP_DIR=$(mktemp -d)
+
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -O "$TEMP_DIR/Miniconda3-latest-MacOSX-arm64.sh"
 
 export PREFIX="$HOME/miniconda3"
 
-bash Miniconda3-latest-MacOSX-arm64.sh
+bash "$TEMP_DIR/Miniconda3-latest-MacOSX-arm64.sh"
 
 # Initialize Conda for the current shell
 echo "Initializing Conda..."
