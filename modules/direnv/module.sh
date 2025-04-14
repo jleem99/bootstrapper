@@ -7,7 +7,7 @@ install_packages "direnv"
 
 log_success "Direnv installed successfully!"
 
-cat <<EOF > ~/.config/direnv/direnvrc
+cat <<'EOF' > ~/.config/direnv/direnvrc
 # layout for conda environments
 layout_conda() {
   local CONDA_HOME="${HOME}/miniconda3/"
