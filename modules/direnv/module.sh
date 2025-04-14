@@ -28,7 +28,7 @@ layout_conda() {
 }
 EOF
 
-echo 'eval $(direnv hook '$(get_current_shell)')' >> "$(get_shell_profile)"
+echo 'eval "$(direnv hook '$(get_current_shell)')"' >> "$(get_shell_profile)"
 
 log_success "Direnv configuration added to ~/.config/direnv/direnvrc"
 
