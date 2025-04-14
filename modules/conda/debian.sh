@@ -14,6 +14,9 @@ bash Miniconda3-latest-Linux-x86_64.sh
 # Initialize Conda for the current shell
 log_info "Initializing Conda..."
 
+# # Add conda initialization to the current shell
+# "$PREFIX/bin/conda" init "$(basename "${SHELL}")"
+
 # Activate Conda for the current shell
 source "$PREFIX/bin/activate"
 

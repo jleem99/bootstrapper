@@ -13,12 +13,11 @@ bash Miniconda3-latest-MacOSX-arm64.sh
 
 # Initialize Conda for the current shell
 echo "Initializing Conda..."
-CONDA_BASE="$HOME/miniconda3"  # Adjust this path if Miniconda is installed elsewhere
 
-# Add conda initialization to the current shell
-"$CONDA_BASE/bin/conda" init "$(basename "${SHELL}")"
+# # Add conda initialization to the current shell
+# "$PREFIX/bin/conda" init "$(basename "${SHELL}")"
 
 # Activate Conda for the current shell
-source "$CONDA_BASE/bin/activate"
+source "$PREFIX/bin/activate"
 
 log_success "Conda installed successfully!"
