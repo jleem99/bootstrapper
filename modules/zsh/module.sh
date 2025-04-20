@@ -22,6 +22,10 @@ sed -i 's/^plugins=(/plugins=(zsh-autosuggestions /' ~/.zshrc
 sed -i '1iZSH_TMUX_AUTOSTART=true' ~/.zshrc
 sed -i 's/^plugins=(/plugins=(tmux /' ~/.zshrc
 
+# Install starship
+curl -sS https://starship.rs/install.sh | sh
+echo 'eval "$(starship init '$(get_current_shell)')"' >> "$(get_shell_profile)"
+
 # Add bootstrapper to PATH
 BIN_DIR="$HOME/.local/bin"
 
