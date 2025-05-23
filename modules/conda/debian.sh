@@ -3,11 +3,11 @@ set -euo pipefail
 
 log_info "Installing Conda for Debian/Ubuntu"
 
-ensure_packages_installed "wget"
+ensure_packages_installed "curl"
 
 TEMP_DIR=$(mktemp -d)
 
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O "$TEMP_DIR/Miniconda3-latest-Linux-x86_64.sh"
+curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o "$TEMP_DIR/Miniconda3-latest-Linux-x86_64.sh"
 
 export PREFIX="$HOME/miniconda3"
 
