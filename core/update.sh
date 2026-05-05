@@ -13,7 +13,7 @@ perform_update() {
   # Check if installation is a git repository
   if [[ ! -d "$BOOTSTRAPPER_ROOT/.git" ]]; then
     log_error "Not installed via git. Please reinstall using the official method:"
-    log_info "curl -fsSL https://bootstrapper.jleem.com/install.sh | bash"
+    log_info "curl -fsSL https://raw.githubusercontent.com/jleem99/bootstrapper/main/install.sh | bash"
     return 1
   fi
   
