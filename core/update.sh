@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+# When sourced from install.sh (curl | bash), BOOTSTRAPPER_ROOT is not set yet —
+# derive it from this script's own location.
+: "${BOOTSTRAPPER_ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+export BOOTSTRAPPER_ROOT
+
 # Source required utilities
 source "$BOOTSTRAPPER_ROOT/core/_logging.sh"
 source "$BOOTSTRAPPER_ROOT/core/_utils.sh"
