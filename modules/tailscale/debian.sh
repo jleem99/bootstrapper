@@ -99,7 +99,7 @@ else
 fi
 
 log_info "Enabling user-manager linger so the daemon survives logout..."
-sudo loginctl enable-linger "$USER"
+loginctl enable-linger "$USER"
 
 log_info "Reloading user systemd and starting $SERVICE_NAME..."
 systemctl --user daemon-reload
