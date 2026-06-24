@@ -10,32 +10,6 @@
     "type": "command",
     "command": "bash -c '\"bun\" \"$(ls -td ~/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | head -1)src/index.ts\"'"
   },
-  "enabledPlugins": {
-    "claude-hud@claude-hud": true,
-    "claude-mem@thedotmack": true,
-    "codex@openai-codex": true,
-    "ouroboros@ouroboros": true
-  },
-  "extraKnownMarketplaces": {
-    "ouroboros": {
-      "source": {
-        "source": "github",
-        "repo": "Q00/ouroboros"
-      }
-    },
-    "thedotmack": {
-      "source": {
-        "source": "github",
-        "repo": "thedotmack/claude-mem"
-      }
-    },
-    "openai-codex": {
-      "source": {
-        "source": "github",
-        "repo": "openai/codex-plugin-cc"
-      }
-    }
-  },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,

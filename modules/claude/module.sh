@@ -66,11 +66,38 @@ install_config "$CONFIG_SRC/CLAUDE.md"     "$CLAUDE_DIR/CLAUDE.md"     "CLAUDE.m
 # ── Alias ──────────────────────────────────────────────────────────────────────
 add_alias "claude" "claude --dangerously-skip-permissions"
 
+# ── Runtime dependencies ───────────────────────────────────────────────────────
+log_section "Installing runtime dependencies"
+
+# bun — required for claude-hud statusline and claude-mem plugin
+source "$BOOTSTRAPPER_ROOT/modules/bun/module.sh"
+
+# uv — required for the ouroboros MCP server (uvx --from ouroboros-ai[mcp,claude])
+source "$BOOTSTRAPPER_ROOT/modules/uv/module.sh"
+
+# codex CLI — required for the codex plugin
+try_run "Install codex CLI" bun install -g @openai/codex
+
+# ── Plugin marketplaces ────────────────────────────────────────────────────────
+log_section "Registering plugin marketplaces"
+
+try_run "Add claude-hud marketplace"   claude plugin marketplace add jarrodwatts/claude-hud
+try_run "Add ouroboros marketplace"    claude plugin marketplace add Q00/ouroboros
+try_run "Add claude-mem marketplace"   claude plugin marketplace add thedotmack/claude-mem
+try_run "Add codex marketplace"        claude plugin marketplace add openai/codex-plugin-cc
+
+# ── Plugins ───────────────────────────────────────────────────────────────────
+log_section "Installing plugins"
+
+try_run "Install claude-hud plugin" claude plugin install claude-hud@claude-hud --scope user
+try_run "Install ouroboros plugin"  claude plugin install ouroboros@ouroboros   --scope user
+try_run "Install claude-mem plugin" claude plugin install claude-mem@thedotmack --scope user
+try_run "Install codex plugin"      claude plugin install codex@openai-codex    --scope user
+
 # ── Done ───────────────────────────────────────────────────────────────────────
 log_success "Claude module completed successfully!"
 log_info ""
 log_info "Next steps:"
 log_info "  1. Open a new shell (or source your profile) to activate the alias."
-log_info "  2. Run 'claude' once to authenticate — credentials are per-machine."
-log_info "  3. Enabled plugins (claude-hud, claude-mem, ouroboros, codex) install"
-log_info "     automatically from GitHub on first launch."
+log_info "  2. Run 'claude' once to authenticate — credentials are per-machine and"
+log_info "     cannot be automated. All plugins and deps are already installed."
