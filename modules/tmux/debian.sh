@@ -102,4 +102,12 @@ log_info "Installing TPM plugins headlessly..."
 "$TPM_DIR/scripts/install_plugins.sh" || log_info "Plugin install complete (non-zero exit is normal outside a tmux session)"
 
 log_success "Tmux configured with TPM and all plugins installed."
-log_info "Restart tmux or run: tmux source ~/.tmux.conf"
+
+if [[ -n "${TMUX:-}" ]]; then
+  if prompt_yes_no "Apply config to the current tmux session now?"; then
+    tmux source "$TMUX_CONF"
+    log_success "Config reloaded."
+  fi
+else
+  log_info "Not inside a tmux session — run 'tmux source ~/.tmux.conf' after starting tmux."
+fi
