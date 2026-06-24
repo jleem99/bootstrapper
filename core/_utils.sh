@@ -77,7 +77,7 @@ prompt_yes_no() {
 # Usage: try_run "Description" cmd [args...]
 try_run() {
   local description="$1"; shift
-  if ! "$@" 2>/dev/null; then
+  if ! "$@"; then
     log_warning "$description failed — skipping (non-fatal)"
   fi
 }
