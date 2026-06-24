@@ -76,7 +76,8 @@ source "$BOOTSTRAPPER_ROOT/modules/bun/module.sh"
 source "$BOOTSTRAPPER_ROOT/modules/uv/module.sh"
 
 # codex CLI — required for the codex plugin
-try_run "Install codex CLI" bun install -g @openai/codex
+try_run "Install codex CLI"    bun install -g @openai/codex
+try_run "Install claude-mem"   bunx claude-mem install
 
 # ── Plugin marketplaces ────────────────────────────────────────────────────────
 log_section "Registering plugin marketplaces"
@@ -97,7 +98,9 @@ try_run "Install codex plugin"      claude plugin install codex@openai-codex    
 # ── Done ───────────────────────────────────────────────────────────────────────
 log_success "Claude module completed successfully!"
 log_info ""
-log_info "Next steps:"
-log_info "  1. Open a new shell (or source your profile) to activate the alias."
-log_info "  2. Run 'claude' once to authenticate — credentials are per-machine and"
-log_info "     cannot be automated. All plugins and deps are already installed."
+log_info "Manual steps required after running 'claude' and logging in:"
+log_info "  /ouroboros:setup   — Guided onboarding wizard for Ouroboros"
+log_info "  /codex:setup       — Check Codex CLI readiness and configure review gate"
+log_info "  /claude-hud:setup  — Configure claude-hud as your statusline"
+log_info ""
+log_info "Open a new shell first to activate the alias, then run 'claude' to log in."
