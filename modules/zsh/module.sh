@@ -18,8 +18,8 @@ perl -pi -e 's/^plugins=\(/plugins=\(zsh-syntax-highlighting /' ~/.zshrc
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 perl -pi -e 's/^plugins=\(/plugins=\(zsh-autosuggestions /' ~/.zshrc
 
-# Install starship (clearing shell env variables to avoid POSIX warnings, and auto-confirming)
-curl -sS https://starship.rs/install.sh | env -u BASH_VERSION -u ZSH_VERSION sh -s -- --yes
+# Install starship (setting POSIXLY_CORRECT to bypass shell compatibility check, and auto-confirming)
+curl -sS https://starship.rs/install.sh | POSIXLY_CORRECT=1 sh -s -- --yes
 if ! grep -q "starship init zsh" ~/.zshrc; then
   echo 'eval "$(starship init zsh)"' >> ~/.zshrc
 fi
