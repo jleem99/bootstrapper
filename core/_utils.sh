@@ -73,7 +73,17 @@ prompt_yes_no() {
   done
 }
 
+# Run a command non-fatally. On failure, logs a warning and continues.
+# Usage: try_run "Description" cmd [args...]
+try_run() {
+  local description="$1"; shift
+  if ! "$@" 2>/dev/null; then
+    log_warning "$description failed — skipping (non-fatal)"
+  fi
+}
+
 export -f get_current_shell
 export -f get_shell_profile
 export -f add_to_path
 export -f prompt_yes_no
+export -f try_run

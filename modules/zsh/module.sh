@@ -5,7 +5,7 @@ log_info "Running zsh module..."
 
 ensure_packages_installed "zsh" "curl" "git"
 
-chsh -s $(which zsh)
+try_run "Set default shell to zsh" chsh -s "$(which zsh)"
 
 # Install oh-my-zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
