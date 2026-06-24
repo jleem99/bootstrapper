@@ -28,4 +28,14 @@ BIN_DIR="$HOME/.local/bin"
 # Add to PATH
 add_to_path "$BIN_DIR" zsh
 
+log_info "Configuring /etc/zshenv..."
+sudo touch /etc/zshenv
+grep -qxF 'ZDOTDIR=$HOME' /etc/zshenv || echo 'ZDOTDIR=$HOME' | sudo tee -a /etc/zshenv > /dev/null
+
+if ! grep -qxF 'LANG=en_US.UTF-8' /etc/default/locale 2>/dev/null; then
+  log_info "Generating en_US.UTF-8 locale..."
+  sudo locale-gen en_US.UTF-8
+  sudo update-locale LANG=en_US.UTF-8
+fi
+
 log_success "zsh module completed successfully!"
