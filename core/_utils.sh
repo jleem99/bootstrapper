@@ -126,6 +126,34 @@ add_alias() {
   done
 }
 
+# Add an environment variable to all supported interactive shell profiles
+# Usage: add_export "NAME" "VALUE"
+add_export() {
+  local name="$1"
+  local val="$2"
+
+  for shell in $(detect_installed_shells); do
+    local profile
+    profile="$(get_shell_profile "$shell" 2>/dev/null)" || continue
+    [[ -f "$profile" ]] || continue
+    
+    case "$shell" in
+      "bash"|"zsh")
+        if ! grep -q "export $name=" "$profile"; then
+          log_info "Adding export $name=$val in $profile"
+          printf '\n# Added by bootstrapper\nexport %s="%s"\n' "$name" "$val" >> "$profile"
+        fi
+        ;;
+      "fish")
+        if ! grep -q "set -gx $name " "$profile"; then
+          log_info "Adding set -gx $name $val in $profile"
+          printf '\n# Added by bootstrapper\nset -gx %s "%s"\n' "$name" "$val" >> "$profile"
+        fi
+        ;;
+    esac
+  done
+}
+
 export -f get_current_shell
 export -f get_shell_profile
 export -f add_to_path
@@ -134,3 +162,4 @@ export -f try_run
 export -f module_dir
 export -f detect_installed_shells
 export -f add_alias
+export -f add_export
