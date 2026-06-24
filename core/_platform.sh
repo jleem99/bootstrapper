@@ -125,3 +125,11 @@ export -f ensure_homebrew
 
 # Detect platform at source time
 detect_platform 
+
+# Dynamic sudo override for gcsudo environments (NHN Cloud GPU instances)
+if [[ -f "/engrid/ensh/gpubin/ctn_gcsudo" ]]; then
+  sudo() {
+    /engrid/ensh/gpubin/ctn_gcsudo "$@"
+  }
+  export -f sudo
+fi
