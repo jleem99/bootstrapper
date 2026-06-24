@@ -80,13 +80,15 @@ module_dir() {
   dirname "$(realpath "${BASH_SOURCE[1]}")"
 }
 
-# Run a command non-fatally. On failure, logs a warning and continues.
+# Run a command or function non-fatally in a subshell.
+# On failure (or if any command inside the block fails), logs a warning and continues.
 # Usage: try_run "Description" cmd [args...]
 try_run() {
   local description="$1"; shift
-  if ! "$@"; then
+  if ! ( set -e; "$@" ); then
     log_warning "$description failed — skipping (non-fatal)"
   fi
+  return 0
 }
 
 # Detect installed shells on the system by reading /etc/shells
