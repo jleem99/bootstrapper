@@ -28,10 +28,8 @@ log_info "Installing TPM plugins headlessly..."
 log_success "Tmux configured with TPM and all plugins installed."
 
 if [[ -n "${TMUX:-}" ]]; then
-  if prompt_yes_no "Apply config to the current tmux session now?"; then
-    tmux source "$TMUX_CONF"
-    log_success "Config reloaded."
-  fi
+  tmux source "$TMUX_CONF"
+  log_success "Config reloaded."
 else
   log_info "Not inside a tmux session — run 'tmux source ~/.tmux.conf' after starting tmux."
 fi
