@@ -4,9 +4,9 @@ set -euo pipefail
 # Source required utilities
 source "$BOOTSTRAPPER_ROOT/core/_logging.sh"
 
-# Version information
-VERSION="0.1.0"
-BUILD_DATE="2024-03-22"
+# Version information derived from git
+VERSION="$(git -C "$BOOTSTRAPPER_ROOT" describe --tags --always --dirty 2>/dev/null || echo "unknown")"
+BUILD_DATE="$(git -C "$BOOTSTRAPPER_ROOT" log -1 --format='%ci' 2>/dev/null | cut -d' ' -f1 || echo "unknown")"
 
 # Display version information
 log_info "Bootstrapper - Version $VERSION"
