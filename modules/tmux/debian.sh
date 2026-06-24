@@ -20,7 +20,7 @@ if [[ -f "$TMUX_CONF" ]]; then
   log_info "Existing config backed up to ${TMUX_CONF}.bak"
 fi
 
-cp "$(dirname "${BASH_SOURCE[0]}")/tmux.conf" "$TMUX_CONF"
+cp "$(module_dir)/tmux.conf" "$TMUX_CONF"
 
 log_info "Installing TPM plugins headlessly..."
 "$TPM_DIR/scripts/install_plugins.sh" || log_info "Plugin install complete (non-zero exit is normal outside a tmux session)"

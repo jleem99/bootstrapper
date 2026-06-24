@@ -73,6 +73,13 @@ prompt_yes_no() {
   done
 }
 
+# Returns the absolute directory of the calling script — useful for referencing
+# files bundled alongside a module script.
+# Usage: cp "$(module_dir)/foo.conf" ~/.foo.conf
+module_dir() {
+  dirname "$(realpath "${BASH_SOURCE[1]}")"
+}
+
 # Run a command non-fatally. On failure, logs a warning and continues.
 # Usage: try_run "Description" cmd [args...]
 try_run() {
@@ -87,3 +94,4 @@ export -f get_shell_profile
 export -f add_to_path
 export -f prompt_yes_no
 export -f try_run
+export -f module_dir
