@@ -17,12 +17,17 @@ echo -e "${BLUE}Installing bootstrapper...${NC}"
 if [[ -d "$INSTALL_DIR/.git" ]]; then
   echo -e "${BLUE}Updating existing installation...${NC}"
   source "$INSTALL_DIR/core/update.sh"
-  exit 0
 else
   echo -e "${BLUE}Cloning repository...${NC}"
   git clone https://github.com/jleem99/bootstrapper.git "$INSTALL_DIR"
+
+  # Initialize bootstrapper
+  echo -e "${BLUE}Initializing bootstrapper...${NC}"
+  bash "$INSTALL_DIR/bootstrapper" init
 fi
 
-# Initialize bootstrapper
-echo -e "${BLUE}Initializing bootstrapper...${NC}"
-bash "$INSTALL_DIR/bootstrapper" init
+read -r -p "Restart shell now to apply changes? [Y/n] " _reply
+case "${_reply,,}" in
+  n|no) ;;
+  *) exec $SHELL -l ;;
+esac
