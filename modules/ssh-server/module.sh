@@ -5,7 +5,7 @@ set -euo pipefail
 log_info "Setting up SSH server..."
 
 # Run platform-specific implementation
-module_run_platform "ssh-server"
+module_run_platform
 
 # Verify SSH server installation
 if command -v sshd &> /dev/null; then

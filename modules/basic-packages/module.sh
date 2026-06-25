@@ -5,7 +5,7 @@ set -euo pipefail
 log_info "Installing basic packages..."
 
 # Run platform-specific implementation
-module_run_platform "basic-packages"
+module_run_platform
 
 # Configure tmux
 log_info "Configuring tmux..."

@@ -5,7 +5,8 @@ set -euo pipefail
 
 log_info "Running nhncloud module..."
 
-module_run_platform "nhncloud"
+# Run platform-specific implementation
+module_run_platform
 
 # nhncloud boxes use bash, not zsh; configure it with oh-my-bash + ble.sh + starship
 run_module "bash"

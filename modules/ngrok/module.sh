@@ -5,6 +5,6 @@ set -euo pipefail
 log_info "Running ngrok module..."
 
 # Run platform-specific implementation
-module_run_platform "ngrok"
+module_run_platform
 
 log_success "ngrok module completed successfully!" 

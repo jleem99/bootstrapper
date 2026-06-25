@@ -25,36 +25,26 @@ module_is_supported() {
 
 # Function to run a platform-specific module implementation.
 # Sources modules/<name>/$PLATFORM.sh in the current shell.
-# Usage: module_run_platform "module_name" [extra_args]
+# Run the platform-specific script for the calling module.
+# Infers the module name and directory from the caller's path (BASH_SOURCE[1]),
+# so no argument is needed. Pass extra args to forward to the platform script.
+# Usage: module_run_platform [extra_args...]
 module_run_platform() {
-  local module_name="$1"
-  shift  # Remove module name from arguments
+  local caller_script="${BASH_SOURCE[1]}"
+  local module_dir
+  module_dir="$(dirname "$caller_script")"
+  local module_name
+  module_name="$(basename "$module_dir")"
 
-  # Get calling script's directory
-  local caller_dir
-  caller_dir="$(dirname "${BASH_SOURCE[1]}")"
-  local module_dir=""
-
-  # Determine the module directory
-  if [[ "$caller_dir" == *"/modules/$module_name" ]]; then
-    # Called from module/module.sh
-    module_dir="$caller_dir"
-  else
-    # Called from somewhere else, use BOOTSTRAPPER_ROOT
-    module_dir="$BOOTSTRAPPER_ROOT/modules/$module_name"
-  fi
-
-  # Construct the platform script path
   local platform_script="$module_dir/$PLATFORM.sh"
 
   if [[ -f "$platform_script" ]]; then
     log_info "Running platform-specific implementation for $PLATFORM..."
-    # Pass any additional arguments to the platform script
     source "$platform_script" "$@"
     log_success "✅ Platform-specific implementation completed"
     return 0
   else
-    log_error "No platform-specific implementation found for $PLATFORM"
+    log_error "No platform-specific implementation found for $module_name on $PLATFORM"
     log_error "Expected file: $platform_script"
     exit 1
   fi
