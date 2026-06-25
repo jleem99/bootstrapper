@@ -26,8 +26,11 @@ else
   bash "$INSTALL_DIR/bootstrapper" init
 fi
 
-read -r -p "Restart shell now to apply changes? [Y/n] " _reply
-case "${_reply,,}" in
-  n|no) ;;
-  *) exec $SHELL -l ;;
-esac
+# _logging.sh and _utils.sh (incl. prompt_yes_no) are available here:
+# update.sh sources them; fresh-install path can source them from the clone.
+source "$INSTALL_DIR/core/_logging.sh"
+source "$INSTALL_DIR/core/_utils.sh"
+
+if prompt_yes_no "Restart shell now to apply changes?" "y"; then
+  exec $SHELL -l
+fi
