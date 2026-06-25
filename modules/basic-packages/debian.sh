@@ -14,7 +14,7 @@ install_packages \
   curl \
   tmux \
   neovim \
-  htop
+  btop
 
 # Install dua-cli
 curl -LSfs https://raw.githubusercontent.com/Byron/dua-cli/master/ci/install.sh | \
