@@ -31,6 +31,12 @@ fi
 source "$INSTALL_DIR/core/_logging.sh"
 source "$INSTALL_DIR/core/_utils.sh"
 
+# curl | bash pipes stdin from the download, not the terminal.
+# Re-attach stdin to /dev/tty so the prompt (and the exec'd shell) get a real terminal.
+if [[ -e /dev/tty ]]; then
+  exec < /dev/tty
+fi
+
 if prompt_yes_no "Restart shell now to apply changes?" "y"; then
   exec $SHELL -l
 fi
