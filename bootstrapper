@@ -71,36 +71,21 @@ log_info "Package manager: $PACKAGE_MANAGER"
 # Process each module
 for module in "$COMMAND" "$@"; do
   log_section "Bootstrapping module: $module"
-  
-  module_dir="$BOOTSTRAPPER_ROOT/modules/$module"
-  module_script="$module_dir/module.sh"
-  platform_script="$module_dir/$PLATFORM.sh"
 
-  if [[ -f "$module_script" ]]; then
-    source "$module_script"
-  else
-    log_error "Error: No implementation found for module $module on platform $PLATFORM!"
+  module_script="$BOOTSTRAPPER_ROOT/modules/$module/module.sh"
+
+  if [[ ! -f "$module_script" ]]; then
+    log_error "Error: Module '$module' not found."
     exit 1
   fi
-  
-  # # Check if the module has a platform-specific implementation
-  # if [[ -f "$platform_script" ]]; then
-  #   log_info "Using platform-specific implementation for $PLATFORM..."
-  #   source "$platform_script"
-  #   log_success "✅ Module $module completed"
-  
-  # # Check if the module has a module.sh file
-  # elif [[ -f "$module_script" ]]; then
-  #   log_info "Using module implementation..."
-  #   source "$module_script"
-  #   log_success "✅ Module $module completed"
-  
-  # # Module exists but no implementation found
-  # else
-  #   log_error "Error: No implementation found for module $module on platform $PLATFORM!"
-  #   exit 1
-  # fi
-  
+
+  if ! module_is_supported "$module"; then
+    log_error "Module '$module' is not supported on $PLATFORM."
+    log_info  "Supported platforms: $(module_supported_platforms "$module")"
+    exit 1
+  fi
+
+  source "$module_script"
 done
 
 log_success "All modules completed successfully!" 

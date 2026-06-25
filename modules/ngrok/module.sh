@@ -1,4 +1,5 @@
 #!/bin/bash
+# Platforms: debian
 set -euo pipefail
 
 log_info "Running ngrok module..."

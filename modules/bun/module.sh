@@ -1,10 +1,9 @@
 #!/bin/bash
 # Description: Install the Bun JavaScript runtime
+# Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
 log_info "Running bun module..."
-
-module_check_supported "bun" "debian" "fedora" "rhel" "arch" "macos"
 
 # ── Prerequisites ──────────────────────────────────────────────────────────────
 ensure_packages_installed "curl" "unzip"

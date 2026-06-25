@@ -1,9 +1,10 @@
 #!/bin/bash
+# Platforms: debian
 set -euo pipefail
 
 log_info "Setting up VNC server..."
 
 # Run platform-specific implementation
-run_platform_module "vnc-server"
+module_run_platform "vnc-server"
 
 log_success "VNC server setup completed successfully!" 

@@ -1,10 +1,9 @@
 #!/bin/bash
 # Description: Install oh-my-bash, ble.sh (highlighting + autosuggestions), and starship
+# Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
 log_info "Running bash module..."
-
-module_check_supported "bash" "debian" "fedora" "rhel" "arch" "macos"
 
 # ── Prerequisites ──────────────────────────────────────────────────────────────
 ensure_packages_installed "bash" "curl" "git"

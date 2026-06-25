@@ -1,4 +1,5 @@
 #!/bin/bash
+# Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
 log_info "Running direnv module..."

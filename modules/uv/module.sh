@@ -1,10 +1,9 @@
 #!/bin/bash
 # Description: Install the uv Python package manager
+# Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
 log_info "Running uv module..."
-
-module_check_supported "uv" "debian" "fedora" "rhel" "arch" "macos"
 
 # ── Prerequisites ──────────────────────────────────────────────────────────────
 ensure_packages_installed "curl"

@@ -1,10 +1,9 @@
 #!/bin/bash
 # Description: Install Claude Code CLI and restore user config (settings, MCP, global CLAUDE.md)
+# Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
 log_info "Running claude module..."
-
-module_check_supported "claude" "debian" "fedora" "rhel" "arch" "macos"
 
 # ── Prerequisites ──────────────────────────────────────────────────────────────
 ensure_packages_installed "curl" "git"

@@ -1,9 +1,10 @@
 #!/bin/bash
+# Platforms: debian
 set -euo pipefail
 
 log_info "Installing COLMAP..."
 
 # Run platform-specific implementation
-run_platform_module "colmap"
+module_run_platform "colmap"
 
 log_success "COLMAP installed successfully!"

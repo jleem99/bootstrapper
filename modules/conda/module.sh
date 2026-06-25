@@ -1,4 +1,5 @@
 #!/bin/bash
+# Platforms: debian macos
 set -euo pipefail
 
 log_info "Running conda module..."

@@ -8,6 +8,7 @@ fi
 
 # Source required utilities
 source "$BOOTSTRAPPER_ROOT/core/_logging.sh"
+source "$BOOTSTRAPPER_ROOT/core/_module.sh"
 
 # Function to display help information
 show_help() {
@@ -41,13 +42,15 @@ show_help() {
         description=$(grep "^# Description:" "$module_dir/module.sh" | cut -d':' -f2- | sed 's/^[[:space:]]*//' || echo "No description available")
         
         # Check if module is supported on current platform
-        if [[ -f "$module_dir/$PLATFORM.sh" ]]; then
+        if module_is_supported "$module_name"; then
           log_success "  $module_name"
           if [[ -n "$description" ]]; then
             log_info "    $description"
           fi
         else
-          log_warning "  $module_name (not supported on current platform)"
+          local supported_list
+          supported_list="$(module_supported_platforms "$module_name" 2>/dev/null || echo "none")"
+          log_warning "  $module_name (not supported on $PLATFORM; supports: $supported_list)"
         fi
       fi
     fi

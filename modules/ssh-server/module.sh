@@ -1,10 +1,11 @@
 #!/bin/bash
+# Platforms: debian
 set -euo pipefail
 
 log_info "Setting up SSH server..."
 
 # Run platform-specific implementation
-run_platform_module "ssh-server"
+module_run_platform "ssh-server"
 
 # Verify SSH server installation
 if command -v sshd &> /dev/null; then

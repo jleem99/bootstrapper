@@ -14,7 +14,7 @@ detect_platform() {
   # Detect OS type
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     PLATFORM_FAMILY="linux"
-    
+
     # Detect Linux distribution and package manager
     if command -v apt-get &> /dev/null; then
       PLATFORM="debian"
@@ -33,18 +33,18 @@ detect_platform() {
       PLATFORM="unknown"
       PACKAGE_MANAGER="unknown"
     fi
-    
+
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     PLATFORM="macos"
     PLATFORM_FAMILY="darwin"
-    
+
     # Check if Homebrew is installed
     if command -v brew &> /dev/null; then
       PACKAGE_MANAGER="brew"
     else
       PACKAGE_MANAGER="none"
     fi
-    
+
   else
     log_warning "Unsupported operating system: $OSTYPE"
     PLATFORM="unknown"
@@ -62,69 +62,14 @@ ensure_homebrew() {
   fi
 }
 
-# Function to check if the platform is supported for a module
-# Usage: check_platform_supported "debian" "fedora" "macos"
-check_platform_supported() {
-  local supported=false
-  for p in "$@"; do
-    if [[ "$PLATFORM" == "$p" ]]; then
-      supported=true
-      break
-    fi
-  done
-  
-  if [[ "$supported" == "false" ]]; then
-    log_error "This module is not supported on $PLATFORM"
-    exit 1
-  fi
-}
-
-# Function to run a platform-specific implementation
-# Usage: run_platform_module "module_name"
-# Example: run_platform_module "ssh-server"
-run_platform_module() {
-  local module_name="$1"
-  shift  # Remove module name from arguments
-  
-  # Get calling script's directory
-  local caller_dir="$(dirname "${BASH_SOURCE[1]}")"
-  local module_dir=""
-  
-  # Determine the module directory
-  if [[ "$caller_dir" == *"/modules/$module_name" ]]; then
-    # Called from module/module.sh
-    module_dir="$caller_dir"
-  else
-    # Called from somewhere else, construct the path
-    module_dir="$BOOTSTRAPPER_ROOT/modules/$module_name"
-  fi
-  
-  # Construct the platform script path
-  local platform_script="$module_dir/$PLATFORM.sh"
-  
-  if [[ -f "$platform_script" ]]; then
-    log_info "Running platform-specific implementation for $PLATFORM..."
-    # Pass any additional arguments to the platform script
-    source "$platform_script" "$@"
-    log_success "✅ Platform-specific implementation completed"
-    return 0
-  else
-    log_error "No platform-specific implementation found for $PLATFORM"
-    log_error "Expected file: $platform_script"
-    exit 1
-  fi
-}
-
 # Export variables and functions
 export PLATFORM
 export PLATFORM_FAMILY
 export PACKAGE_MANAGER
-export -f check_platform_supported
-export -f run_platform_module
 export -f ensure_homebrew
 
 # Detect platform at source time
-detect_platform 
+detect_platform
 
 # Dynamic sudo override for gcsudo environments (NHN Cloud GPU instances)
 if [[ -f "/engrid/ensh/gpubin/ctn_gcsudo" ]]; then

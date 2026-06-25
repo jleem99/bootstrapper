@@ -1,4 +1,6 @@
 #!/bin/bash
+# Description: Install oh-my-zsh, syntax-highlighting, autosuggestions, and starship
+# Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
 log_info "Running zsh module..."
