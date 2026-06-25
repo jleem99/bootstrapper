@@ -12,6 +12,7 @@ source "$BOOTSTRAPPER_ROOT/core/_module.sh"
 source "$BOOTSTRAPPER_ROOT/core/_package.sh"
 source "$BOOTSTRAPPER_ROOT/core/_python.sh"
 source "$BOOTSTRAPPER_ROOT/core/_utils.sh"
+source "$BOOTSTRAPPER_ROOT/core/_shellenv.sh"
 
 # Print a brief usage information
 show_brief_usage() {

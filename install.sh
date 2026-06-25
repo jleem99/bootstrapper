@@ -11,9 +11,11 @@
 # "...:file:shfunc" inside a function, so the check would fail if deferred.
 __BOOTSTRAPPER_IS_SOURCED=0
 if [ -n "${ZSH_VERSION:-}" ]; then
+  __BOOTSTRAPPER_SHELL=zsh
   case "${ZSH_EVAL_CONTEXT:-}" in *:file*) __BOOTSTRAPPER_IS_SOURCED=1 ;; esac
-elif [ "${BASH_SOURCE[0]}" != "${0}" ]; then
-  __BOOTSTRAPPER_IS_SOURCED=1
+else
+  __BOOTSTRAPPER_SHELL=bash
+  [ "${BASH_SOURCE[0]}" != "${0}" ] && __BOOTSTRAPPER_IS_SOURCED=1
 fi
 
 __bootstrapper_install() {
@@ -36,18 +38,21 @@ __bootstrapper_install() {
       || { echo "Init failed." >&2; return 1; }
   fi
 
-  # Apply PATH to the current shell — this is the entire point of sourcing.
-  # When executed (curl | bash), this only affects the subprocess and is
-  # effectively a no-op for the caller.
+  # Ensure BIN_DIR is on PATH so `bootstrapper` resolves for the eval below.
   case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
     *) export PATH="$BIN_DIR:$PATH" ;;
   esac
 
   if [ "${__BOOTSTRAPPER_IS_SOURCED:-0}" = "1" ] && command -v bootstrapper >/dev/null 2>&1; then
+    # Load the bootstrapper() wrapper function into the current shell.
+    # The wrapper is what propagates PATH/export/alias from future module runs.
+    eval "$(bootstrapper shellenv "${__BOOTSTRAPPER_SHELL:-bash}")"
     echo "bootstrapper is ready."
     echo -e "  Run: \033[0;34mbootstrapper help\033[0m"
   else
+    # Not sourced (curl | bash): install succeeded but the parent shell won't
+    # see PATH or the wrapper function.
     echo "bootstrapper installed."
     echo "Open a new terminal or run 'source ~/.bashrc' (or your shell's profile) to use it."
   fi
@@ -55,4 +60,4 @@ __bootstrapper_install() {
 
 __bootstrapper_install
 unset -f __bootstrapper_install 2>/dev/null || true
-unset __BOOTSTRAPPER_IS_SOURCED 2>/dev/null || true
+unset __BOOTSTRAPPER_IS_SOURCED __BOOTSTRAPPER_SHELL 2>/dev/null || true

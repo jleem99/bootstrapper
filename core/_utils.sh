@@ -25,6 +25,19 @@ get_shell_profile() {
   esac
 }
 
+# Emit a line to the session-env file when running under the bootstrapper()
+# wrapper function. The wrapper sets BOOTSTRAPPER_SESSION_ENV to a temp file;
+# after the binary exits, the wrapper sources that file to apply env changes
+# (PATH additions, exports, aliases) to the calling interactive shell.
+# $1 = bash/zsh line, $2 = fish line
+_session_emit() {
+  [ -n "${BOOTSTRAPPER_SESSION_ENV:-}" ] || return 0
+  case "${BOOTSTRAPPER_SESSION_SHELL:-bash}" in
+    fish) printf '%s\n' "$2" >> "$BOOTSTRAPPER_SESSION_ENV" ;;
+    *)    printf '%s\n' "$1" >> "$BOOTSTRAPPER_SESSION_ENV" ;;
+  esac
+}
+
 # NOT a wrapper around add_export: the profile line must write $PATH as a
 # reference (export PATH="dir:$PATH"), not a snapshot of its current value.
 add_to_path() {
@@ -33,7 +46,7 @@ add_to_path() {
   local profile="${3:-$(get_shell_profile "$shell")}"
 
   log_info "Adding $bin_dir to \$PATH in $profile"
-  
+
   case "$shell" in
     "bash"|"zsh")
       if ! grep -q "export PATH=\"$bin_dir:\$PATH\"" "$profile"; then
@@ -50,6 +63,11 @@ add_to_path() {
   # Also apply to the current shell session so subsequent steps in this run can
   # use the newly added directory without requiring a new shell.
   export PATH="$bin_dir:$PATH"
+
+  # Propagate to the calling interactive shell via the session-env bridge.
+  _session_emit \
+    "export PATH=\"$bin_dir:\$PATH\"" \
+    "set -gx PATH \"$bin_dir\" \$PATH"
 }
 
 # Prompt the user with a yes/no question.
@@ -131,6 +149,11 @@ add_alias() {
   done
 
   alias "${name}=${cmd}"
+
+  # Propagate to the calling interactive shell via the session-env bridge.
+  _session_emit \
+    "alias $name=\"$cmd\"" \
+    "alias $name \"$cmd\""
 }
 
 # Add an environment variable to all supported interactive shell profiles
@@ -161,8 +184,35 @@ add_export() {
   done
 
   export "${name}=${val}"
+
+  # Propagate to the calling interactive shell via the session-env bridge.
+  _session_emit \
+    "export $name=\"$val\"" \
+    "set -gx $name \"$val\""
 }
 
+# Write content between managed marker lines in a profile.
+# Strips any existing >>> bootstrapper >>> … <<< bootstrapper <<< block first,
+# then appends the fresh block. Idempotent: safe to call multiple times.
+# Usage: write_managed_block <profile> <content>
+write_managed_block() {
+  local profile="$1"
+  local content="$2"
+  local tmp
+
+  # Remove existing managed block (if any) using awk for portability.
+  tmp="$(awk '
+    /^# >>> bootstrapper >>>/ { skip=1 }
+    skip && /^# <<< bootstrapper <<</ { skip=0; next }
+    !skip { print }
+  ' "$profile")"
+
+  # Write stripped content back, then append the fresh block.
+  printf '%s\n' "$tmp" > "$profile"
+  printf '\n%s\n' "$content" >> "$profile"
+}
+
+export -f _session_emit
 export -f get_current_shell
 export -f get_shell_profile
 export -f add_to_path
@@ -172,3 +222,4 @@ export -f module_dir
 export -f detect_installed_shells
 export -f add_alias
 export -f add_export
+export -f write_managed_block

@@ -22,9 +22,13 @@ function __bootstrapper_install
         or begin; echo "Init failed." >&2; return 1; end
     end
 
-    # Apply PATH to the current fish session.
+    # Load the bootstrapper() wrapper function into the current fish session.
+    # The function is what propagates PATH/exports from future module runs.
     if not contains "$BIN_DIR" $PATH
         set -gx PATH "$BIN_DIR" $PATH
+    end
+    if command -v bootstrapper >/dev/null 2>&1
+        bootstrapper shellenv fish | source
     end
 
     echo "bootstrapper is ready."
