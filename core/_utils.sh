@@ -212,6 +212,48 @@ write_managed_block() {
   printf '\n%s\n' "$content" >> "$profile"
 }
 
+# Remove all bootstrapper-owned content from a shell profile.
+# Strips:
+#   - the >>> bootstrapper >>> … <<< bootstrapper <<< managed function block
+#   - the exact ~/.local/bin PATH line bootstrapper adds (bash/zsh and fish forms)
+#   - every "# Added by bootstrapper" comment and the single line following it
+# Exact-match only — never broad-filters; user content is never touched.
+# Usage: clean_profile <profile> [bin_dir]  (bin_dir defaults to $HOME/.local/bin)
+clean_profile() {
+  local profile="$1"
+  local bin_dir="${2:-$HOME/.local/bin}"
+  [[ -f "$profile" ]] || return 0
+
+  # The two exact PATH lines add_to_path writes (bash/zsh form and fish form).
+  local bash_path_line="export PATH=\"${bin_dir}:\$PATH\""
+  local fish_path_line="set -gx PATH \"${bin_dir}\" \$PATH"
+
+  local tmp
+  tmp="$(awk \
+    -v bash_line="$bash_path_line" \
+    -v fish_line="$fish_path_line" \
+    '
+    # State: inside managed block → skip until closing marker.
+    /^# >>> bootstrapper >>>/ { skip_block=1; next }
+    skip_block && /^# <<< bootstrapper <<</ { skip_block=0; next }
+    skip_block { next }
+
+    # State: previous line was "# Added by bootstrapper" → skip one payload line.
+    skip_next { skip_next=0; next }
+
+    # Exact PATH lines bootstrapper adds.
+    $0 == bash_line { next }
+    $0 == fish_line { next }
+
+    # Tagged comment: skip this line and flag the next one.
+    /^# Added by bootstrapper$/ { skip_next=1; next }
+
+    { print }
+  ' "$profile")"
+
+  printf '%s\n' "$tmp" > "$profile"
+}
+
 export -f _session_emit
 export -f get_current_shell
 export -f get_shell_profile
@@ -223,3 +265,4 @@ export -f detect_installed_shells
 export -f add_alias
 export -f add_export
 export -f write_managed_block
+export -f clean_profile

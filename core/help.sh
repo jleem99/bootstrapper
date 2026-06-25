@@ -23,6 +23,7 @@ show_help() {
   log_info "  help            Display this help message"
   log_info "  version         Display version information"
   log_info "  update          Update bootstrapper to the latest version"
+  log_info "  uninstall       Remove bootstrapper from this system"
   log_info "  <module> ...    Bootstrap one or more modules"
   log_info ""
   log_info "Examples:"
