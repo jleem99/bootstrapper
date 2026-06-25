@@ -57,6 +57,22 @@ module_run_platform() {
   fi
 }
 
+# Run another module by name (cross-module composition).
+# Sources <root>/modules/<name>/module.sh in the current shell so its
+# installs, PATH changes, and profile writes take effect for the caller too.
+# Usage: run_module "bash"
+run_module() {
+  local module_name="$1"
+  local module_script="$BOOTSTRAPPER_ROOT/modules/$module_name/module.sh"
+  if [[ ! -f "$module_script" ]]; then
+    log_error "Cannot run module '$module_name': $module_script not found"
+    return 1
+  fi
+  log_section "Bootstrapping module: $module_name"
+  source "$module_script"
+}
+
 # Export utility functions
 export -f module_check_supported
 export -f module_run_platform
+export -f run_module

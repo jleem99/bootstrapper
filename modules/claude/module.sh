@@ -70,10 +70,10 @@ add_alias "claude" "claude --dangerously-skip-permissions"
 log_section "Installing runtime dependencies"
 
 # bun — required for claude-hud statusline and claude-mem plugin
-source "$BOOTSTRAPPER_ROOT/modules/bun/module.sh"
+run_module "bun"
 
 # uv — required for the ouroboros MCP server (uvx --from ouroboros-ai[mcp,claude])
-source "$BOOTSTRAPPER_ROOT/modules/uv/module.sh"
+run_module "uv"
 
 # codex CLI — required for the codex plugin
 try_run "Install codex CLI"    bun install -g @openai/codex
