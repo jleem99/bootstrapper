@@ -52,9 +52,9 @@ perform_update() {
   log_info "Applying updates..."
   git checkout origin/main -q || { log_error "Failed to apply updates"; cd "$CURRENT_DIR"; return 1; }
   
-  # Run init script to ensure symlinks, etc. are updated
+  # Run init to ensure symlinks, etc. are updated
   log_info "Reinitializing bootstrapper..."
-  "$BOOTSTRAPPER_ROOT/init.sh" || { log_error "Failed to reinitialize bootstrapper"; cd "$CURRENT_DIR"; return 1; }
+  bash "$BOOTSTRAPPER_ROOT/bootstrapper" init || { log_error "Failed to reinitialize bootstrapper"; cd "$CURRENT_DIR"; return 1; }
   
   # Return to original directory
   cd "$CURRENT_DIR"

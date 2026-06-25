@@ -25,4 +25,4 @@ fi
 
 # Initialize bootstrapper
 echo -e "${BLUE}Initializing bootstrapper...${NC}"
-source "$INSTALL_DIR/init.sh"
+bash "$INSTALL_DIR/bootstrapper" init

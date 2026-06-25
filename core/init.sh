@@ -16,6 +16,22 @@ if [[ ! -f "$PROFILE" ]]; then
   touch "$PROFILE"
 fi
 
+# Snapshot PATH before add_to_path mutates it — used below to decide whether
+# we need to tell the user how to activate bootstrapper in their current shell.
+_PATH_BEFORE="$PATH"
+
 add_to_path "$BIN_DIR" "$SHELL_NAME"
 
 log_success "Bootstrapper initialized successfully!"
+
+case ":$_PATH_BEFORE:" in
+  *":$BIN_DIR:"*)
+    log_info "Run 'bootstrapper help' to get started."
+    ;;
+  *)
+    log_info ""
+    log_info "To use 'bootstrapper' in your current shell, run:"
+    log_info "  source $PROFILE"
+    log_info "Or open a new terminal."
+    ;;
+esac
