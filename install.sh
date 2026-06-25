@@ -1,42 +1,58 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# Usage:
+#   bash/zsh (recommended — bootstrapper usable immediately):
+#     source <(curl -fsSL https://raw.githubusercontent.com/jleem99/bootstrapper/refs/heads/main/install.sh)
+#
+#   Fallback (curl | bash / bash install.sh) — installs but requires opening a new terminal:
+#     curl -fsSL https://raw.githubusercontent.com/jleem99/bootstrapper/refs/heads/main/install.sh | bash
 
-# Colors for output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
-# Installation directory
-INSTALL_DIR="$HOME/.local/share/bootstrapper"
-
-# Main installation process
-echo -e "${BLUE}Installing bootstrapper...${NC}"
-
-# Clone or update the repository
-if [[ -d "$INSTALL_DIR/.git" ]]; then
-  echo -e "${BLUE}Updating existing installation...${NC}"
-  source "$INSTALL_DIR/core/update.sh"
-else
-  echo -e "${BLUE}Cloning repository...${NC}"
-  git clone https://github.com/jleem99/bootstrapper.git "$INSTALL_DIR"
-
-  # Initialize bootstrapper
-  echo -e "${BLUE}Initializing bootstrapper...${NC}"
-  bash "$INSTALL_DIR/bootstrapper" init
+# Detect sourced vs executed at the TOP LEVEL of the file.
+# Must be top-level: in zsh ZSH_EVAL_CONTEXT is "...:file" here but
+# "...:file:shfunc" inside a function, so the check would fail if deferred.
+__BOOTSTRAPPER_IS_SOURCED=0
+if [ -n "${ZSH_VERSION:-}" ]; then
+  case "${ZSH_EVAL_CONTEXT:-}" in *:file*) __BOOTSTRAPPER_IS_SOURCED=1 ;; esac
+elif [ "${BASH_SOURCE[0]}" != "${0}" ]; then
+  __BOOTSTRAPPER_IS_SOURCED=1
 fi
 
-# _logging.sh and _utils.sh (incl. prompt_yes_no) are available here:
-# update.sh sources them; fresh-install path can source them from the clone.
-source "$INSTALL_DIR/core/_logging.sh"
-source "$INSTALL_DIR/core/_utils.sh"
+__bootstrapper_install() {
+  local INSTALL_DIR="$HOME/.local/share/bootstrapper"
+  local BIN_DIR="$HOME/.local/bin"
+  local REPO="https://github.com/jleem99/bootstrapper.git"
 
-# curl | bash pipes stdin from the download, not the terminal.
-# Re-attach stdin to /dev/tty so the prompt (and the exec'd shell) get a real terminal.
-if [[ -e /dev/tty ]]; then
-  exec < /dev/tty
-fi
+  echo "Installing bootstrapper..."
 
-if prompt_yes_no "Restart shell now to apply changes?" "y"; then
-  exec $SHELL -l
-fi
+  if [ -d "$INSTALL_DIR/.git" ]; then
+    echo "Updating existing installation..."
+    BOOTSTRAPPER_QUIET_HINT=1 bash "$INSTALL_DIR/bootstrapper" update \
+      || { echo "Update failed." >&2; return 1; }
+  else
+    echo "Cloning repository..."
+    git clone "$REPO" "$INSTALL_DIR" \
+      || { echo "Clone failed." >&2; return 1; }
+    echo "Initializing bootstrapper..."
+    BOOTSTRAPPER_QUIET_HINT=1 bash "$INSTALL_DIR/bootstrapper" init \
+      || { echo "Init failed." >&2; return 1; }
+  fi
+
+  # Apply PATH to the current shell — this is the entire point of sourcing.
+  # When executed (curl | bash), this only affects the subprocess and is
+  # effectively a no-op for the caller.
+  case ":$PATH:" in
+    *":$BIN_DIR:"*) ;;
+    *) export PATH="$BIN_DIR:$PATH" ;;
+  esac
+
+  if [ "${__BOOTSTRAPPER_IS_SOURCED:-0}" = "1" ] && command -v bootstrapper >/dev/null 2>&1; then
+    echo "bootstrapper is ready."
+    echo -e "  Run: \033[0;34mbootstrapper help\033[0m"
+  else
+    echo "bootstrapper installed."
+    echo "Open a new terminal or run 'source ~/.bashrc' (or your shell's profile) to use it."
+  fi
+}
+
+__bootstrapper_install
+unset -f __bootstrapper_install 2>/dev/null || true
+unset __BOOTSTRAPPER_IS_SOURCED 2>/dev/null || true

@@ -24,14 +24,19 @@ add_to_path "$BIN_DIR" "$SHELL_NAME"
 
 log_success "Bootstrapper initialized successfully!"
 
-case ":$_PATH_BEFORE:" in
-  *":$BIN_DIR:"*)
-    log_info "Run 'bootstrapper help' to get started."
-    ;;
-  *)
-    log_info ""
-    log_info "To use 'bootstrapper' in your current shell, run:"
-    log_info "  source $PROFILE"
-    log_info "Or open a new terminal."
-    ;;
-esac
+# BOOTSTRAPPER_QUIET_HINT=1 is set by install.sh/install.fish so the activation
+# hint is suppressed when the sourced installer applies PATH directly to the
+# caller's shell. Keep the hint for standalone `bootstrapper init` runs.
+if [[ -z "${BOOTSTRAPPER_QUIET_HINT:-}" ]]; then
+  case ":$_PATH_BEFORE:" in
+    *":$BIN_DIR:"*)
+      log_info "Run 'bootstrapper help' to get started."
+      ;;
+    *)
+      log_info ""
+      log_info "To use 'bootstrapper' in your current shell, run:"
+      log_info "  source $PROFILE"
+      log_info "Or open a new terminal."
+      ;;
+  esac
+fi
