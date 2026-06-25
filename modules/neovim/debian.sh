@@ -9,8 +9,8 @@ case "$ARCH" in
   *) log_error "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-if command -v nvim &>/dev/null; then
-  log_info "Neovim already installed: $(nvim --version | head -1)"
+if [[ -x "/opt/${NVIM_DIR}/bin/nvim" ]]; then
+  log_info "Neovim already installed: $(/opt/${NVIM_DIR}/bin/nvim --version | head -1)"
 else
   install_nvim() {
     local tmp; tmp="$(mktemp -d)"

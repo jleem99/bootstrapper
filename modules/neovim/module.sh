@@ -33,7 +33,7 @@ fi
 # ── Pre-install plugins at locked versions (non-fatal) ─────────────────────────
 if command -v nvim &>/dev/null; then
   try_run "Install Neovim plugins (Lazy restore)" \
-    nvim --headless "+Lazy! restore" +qa
+    nvim --headless "+Lazy! restore" +qa < /dev/null
 else
   log_warning "nvim not on PATH yet — open a new shell and run nvim to finish setup."
 fi
