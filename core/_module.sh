@@ -50,7 +50,7 @@ module_run_platform() {
   fi
 }
 
-# Run another module by name (cross-module composition).
+# Run module by name
 # Sources modules/<name>/module.sh in the current shell after checking support,
 # so installs, PATH changes, and profile writes take effect for the caller too.
 # Usage: run_module "bash"

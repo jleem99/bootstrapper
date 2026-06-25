@@ -70,22 +70,7 @@ log_info "Package manager: $PACKAGE_MANAGER"
 
 # Process each module
 for module in "$COMMAND" "$@"; do
-  log_section "Bootstrapping module: $module"
-
-  module_script="$BOOTSTRAPPER_ROOT/modules/$module/module.sh"
-
-  if [[ ! -f "$module_script" ]]; then
-    log_error "Error: Module '$module' not found."
-    exit 1
-  fi
-
-  if ! module_is_supported "$module"; then
-    log_error "Module '$module' is not supported on $PLATFORM."
-    log_info  "Supported platforms: $(module_supported_platforms "$module")"
-    exit 1
-  fi
-
-  source "$module_script"
+  run_module "$module" || exit 1
 done
 
 log_success "All modules completed successfully!" 
