@@ -25,7 +25,6 @@ fi
 
 # Ensure nvim is on PATH for the config restore + headless sync that follows
 add_to_path "/opt/${NVIM_DIR}/bin"
-export PATH="/opt/${NVIM_DIR}/bin:$PATH"
 
 # ── LazyVim system deps ────────────────────────────────────────────────────────
 # Note: apt package names differ from command names:

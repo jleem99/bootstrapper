@@ -24,6 +24,5 @@ fi
 # Ensure ~/.local/bin is on PATH for subsequent steps in the current run
 mkdir -p "$UV_BIN_DIR"
 add_to_path "$UV_BIN_DIR"
-export PATH="$UV_BIN_DIR:$PATH"
 
 log_success "uv module completed successfully!"

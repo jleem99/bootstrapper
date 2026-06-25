@@ -23,7 +23,6 @@ fi
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
 add_to_path "$BIN_DIR"
-export PATH="$BIN_DIR:$PATH"
 
 # ── Restore config files ───────────────────────────────────────────────────────
 CLAUDE_DIR="$HOME/.claude"

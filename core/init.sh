@@ -17,6 +17,5 @@ if [[ ! -f "$PROFILE" ]]; then
 fi
 
 add_to_path "$BIN_DIR" "$SHELL_NAME"
-export PATH="$BIN_DIR:$PATH"
 
 log_success "Bootstrapper initialized successfully!"

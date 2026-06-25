@@ -24,6 +24,5 @@ fi
 # Ensure ~/.bun/bin is on PATH for subsequent steps in the current run
 mkdir -p "$BUN_BIN_DIR"
 add_to_path "$BUN_BIN_DIR"
-export PATH="$BUN_BIN_DIR:$PATH"
 
 log_success "Bun module completed successfully!"

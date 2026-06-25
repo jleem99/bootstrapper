@@ -25,7 +25,8 @@ get_shell_profile() {
   esac
 }
 
-# Function to add to PATH
+# NOT a wrapper around add_export: the profile line must write $PATH as a
+# reference (export PATH="dir:$PATH"), not a snapshot of its current value.
 add_to_path() {
   local bin_dir="$1"
   local shell="${2:-$(get_current_shell)}"
@@ -45,6 +46,10 @@ add_to_path() {
       fi
       ;;
   esac
+
+  # Also apply to the current shell session so subsequent steps in this run can
+  # use the newly added directory without requiring a new shell.
+  export PATH="$bin_dir:$PATH"
 }
 
 # Prompt the user with a yes/no question.
@@ -124,6 +129,8 @@ add_alias() {
       printf '\n# Added by bootstrapper\nalias %s="%s"\n' "$name" "$cmd" >> "$profile"
     fi
   done
+
+  alias "${name}=${cmd}"
 }
 
 # Add an environment variable to all supported interactive shell profiles
@@ -152,6 +159,8 @@ add_export() {
         ;;
     esac
   done
+
+  export "${name}=${val}"
 }
 
 export -f get_current_shell
