@@ -12,6 +12,5 @@ fi
 # Map sudo to gcsudo in user's interactive shell profiles
 add_alias "sudo" "$GCSUDO_BIN"
 
-# Set LANG and LC_ALL in interactive shell profiles as system locale changes may not persist
+# Set LANG in interactive shell profiles as system locale changes may not persist
 add_export "LANG" "en_US.UTF-8"
-add_export "LC_ALL" "en_US.UTF-8"
