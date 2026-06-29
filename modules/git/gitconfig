@@ -1,0 +1,42 @@
+[alias]
+	l = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold red)%h%C(reset) : %C(bold green)(%ar)%C(reset) - %C(cyan)<%an>%C(reset)%C(bold yellow)%d%C(reset)%n%n%w(90,1,2)%C(white)%B%C(reset)%n'
+	lg = log --graph --abbrev-commit --decorate --format=format:"%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)%n"" %C(white)%s%C(reset) %C(dim white)- %an%C(reset)"
+	lga = log --graph --abbrev-commit --decorate --format=format:"%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)%n"" %C(white)%s%C(reset) %C(dim white)- %an%C(reset)" --all
+	la = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold red)%h%C(reset) : %C(bold green)(%ar)%C(reset) - %C(cyan)<%an>%C(reset)%C(bold yellow)%d%C(reset)%n%n%w(90,1,2)%C(white)%B%C(reset)%n' --all
+	cm = commit --cleanup=scissors
+	s = status
+	delete-squashed = "!f() { local targetBranch=${1:-main} && git checkout -q $targetBranch && git branch --merged | grep -v \"\\*\" | xargs -n 1 git branch -d && git for-each-ref refs/heads/ \"--format=%(refname:short)\" | while read branch; do mergeBase=$(git merge-base $targetBranch $branch) && [[ $(git cherry $targetBranch $(git commit-tree $(git rev-parse $branch^{tree}) -p $mergeBase -m _)) == \"-\"* ]] && git branch -D $branch; done; }; f"
+	stash-staged = "!bash -c \"git stash --keep-index; git stash push -m \"staged\" --keep-index; git stash pop stash@{1}\""
+	move-staged = "!bash -c \"git stash-staged;git commit -m \"temp\" --no-verify; git stash; git reset --hard HEAD^; git stash pop\""
+	stash-keep = !git stash store $(git stash create)
+	root = rev-parse --show-toplevel
+	pf = push --force-with-lease --force-if-includes
+	ph = push -u origin HEAD
+	gi = "!gi() { curl -sL https://www.toptal.com/developers/gitignore/api/$@ ;}; gi"
+	can = commit --amend --no-edit
+	acan = !git add . && git commit --amend --no-edit
+	ri = rebase -i --rebase-merges
+	ignore = update-index --assume-unchanged
+[pull]
+	ff = only
+[fetch]
+	prune = true
+[init]
+	defaultBranch = main
+[core]
+	editor = nvim
+	autocrlf = input
+[push]
+	followTags = true
+	default = upstream
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[credential]
+	helper = store
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
