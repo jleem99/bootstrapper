@@ -1,5 +1,5 @@
 #!/bin/bash
-# Description: Install oh-my-bash, ble.sh (highlighting + autosuggestions), and starship
+# Description: Install oh-my-bash, ble.sh (highlighting + autosuggestions), and Starship prompt
 # Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
@@ -42,13 +42,7 @@ install_blesh() {
 try_run "Install ble.sh" install_blesh
 
 # ── Starship prompt ─────────────────────────────────────────────────────────────
-install_starship() {
-  curl -sS https://starship.rs/install.sh | POSIXLY_CORRECT=1 sh -s -- --yes
-  if ! grep -q "starship init bash" "$HOME/.bashrc"; then
-    echo 'eval "$(starship init bash)"' >> "$HOME/.bashrc"
-  fi
-}
-try_run "Install Starship" install_starship
+run_module "starship"
 
 # ── PATH ───────────────────────────────────────────────────────────────────────
 add_to_path "$HOME/.local/bin" bash

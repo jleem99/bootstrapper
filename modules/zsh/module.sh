@@ -20,14 +20,8 @@ perl -pi -e 's/^plugins=\(/plugins=\(zsh-syntax-highlighting /' ~/.zshrc
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 perl -pi -e 's/^plugins=\(/plugins=\(zsh-autosuggestions /' ~/.zshrc
 
-# Install starship as a non-fatal block using try_run
-install_starship() {
-  curl -sS https://starship.rs/install.sh | POSIXLY_CORRECT=1 sh -s -- --yes
-  if ! grep -q "starship init zsh" ~/.zshrc; then
-    echo 'eval "$(starship init zsh)"' >> ~/.zshrc
-  fi
-}
-try_run "Install Starship" install_starship
+# ── Starship prompt ─────────────────────────────────────────────────────────────
+run_module "starship"
 
 # Add bootstrapper to PATH
 BIN_DIR="$HOME/.local/bin"
