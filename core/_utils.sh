@@ -141,8 +141,10 @@ add_alias() {
     profile="$(get_shell_profile "$shell" 2>/dev/null)" || continue
     [[ -f "$profile" ]] || continue
     
-    # Check if the alias is already defined to avoid duplicates
-    if ! grep -q "alias $name=" "$profile" && ! grep -q "alias $name " "$profile"; then
+    # Check if the alias is already defined to avoid duplicates.
+    # Anchored to line start (^) so commented examples like "# alias foo=..." don't
+    # cause false-positive matches and skip the real add.
+    if ! grep -qE "^alias $name=" "$profile" && ! grep -qE "^alias $name " "$profile"; then
       log_info "Adding alias $name -> $cmd in $profile"
       printf '\n# Added by bootstrapper\nalias %s="%s"\n' "$name" "$cmd" >> "$profile"
     fi
@@ -169,13 +171,15 @@ add_export() {
     
     case "$shell" in
       "bash"|"zsh")
-        if ! grep -q "export $name=" "$profile"; then
+        # Anchored to line start (^) so commented template lines like
+        # "# export LANG=en_US.UTF-8" don't cause a false-positive skip.
+        if ! grep -qE "^export $name=" "$profile"; then
           log_info "Adding export $name=$val in $profile"
           printf '\n# Added by bootstrapper\nexport %s="%s"\n' "$name" "$val" >> "$profile"
         fi
         ;;
       "fish")
-        if ! grep -q "set -gx $name " "$profile"; then
+        if ! grep -qE "^set -gx $name " "$profile"; then
           log_info "Adding set -gx $name $val in $profile"
           printf '\n# Added by bootstrapper\nset -gx %s "%s"\n' "$name" "$val" >> "$profile"
         fi
