@@ -1,5 +1,5 @@
 #!/bin/bash
-# Description: Configure git with aliases, SSH commit signing, and GitHub identity
+# Description: Configure git with aliases, SSH commit signing + auth, and GitHub identity
 # Platforms: debian fedora rhel arch macos
 set -euo pipefail
 
@@ -10,6 +10,7 @@ ensure_packages_installed git git-lfs
 
 # ── GitHub CLI: install + authenticate ────────────────────────────────────────
 run_module "gh"
+export GH_PAGER=
 
 # ── Derive identity from GitHub ───────────────────────────────────────────────
 log_info "Fetching identity from GitHub API..."
@@ -118,33 +119,43 @@ log_success "~/.ssh/allowed_signers configured for local commit verification"
 git lfs install
 log_success "git-lfs initialized (per-user)"
 
-# ── Optional: upload signing key to GitHub ────────────────────────────────────
+# ── SSH config: use id_git for github.com (auth + signing) ───────────────────
+SSH_CONFIG="$SSH_DIR/config"
+touch "$SSH_CONFIG"
+chmod 600 "$SSH_CONFIG"
+
+SSH_BLOCK="# >>> bootstrapper >>>
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile $KEY_PATH
+  IdentitiesOnly yes
+# <<< bootstrapper <<<"
+
+write_managed_block "$SSH_CONFIG" "$SSH_BLOCK"
+log_success "~/.ssh/config: github.com → id_git"
+
+# ── Optional: upload keys to GitHub ──────────────────────────────────────────
 if gh auth status &>/dev/null; then
-  if prompt_yes_no "Upload id_git as a GitHub signing key now?" "y"; then
+  if prompt_yes_no "Upload id_git to GitHub (signing + auth key)?" "y"; then
     _key_title="id_git ($(hostname))"
+    _pubkey="$(cat "$KEY_PATH.pub")"
+
     upload_signing_key() {
       gh api -X POST /user/ssh_signing_keys \
         -f "title=$_key_title" \
-        -f "key=$(cat "$KEY_PATH.pub")"
+        -f "key=$_pubkey"
     }
+    upload_auth_key() {
+      gh api -X POST /user/keys \
+        -f "title=$_key_title" \
+        -f "key=$_pubkey"
+    }
+
     try_run "Upload signing key to GitHub" upload_signing_key
+    try_run "Upload authentication key to GitHub" upload_auth_key
   fi
 fi
 
-# ── Display the public key + instructions ─────────────────────────────────────
-log_section "New SSH signing key: $KEY_PATH.pub"
-cat "$KEY_PATH.pub"
-echo ""
-log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_info "Add this key to GitHub to mark your commits as Verified:"
-log_info "  https://github.com/settings/ssh/new"
-log_info ""
-log_info "  Key type : Signing Key"
-log_info "  Title    : id_git (or any label you prefer)"
-log_info "  Key      : (paste the line above)"
-log_info ""
-log_info "Optionally add it as an Authentication Key too if you want to use"
-log_info "this key for git push over SSH."
-log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
+log_info "Public key: cat $KEY_PATH.pub"
 log_success "Git module completed successfully!"

@@ -10,7 +10,7 @@ module_run_platform
 # ── Required scopes ───────────────────────────────────────────────────────────
 # Default scopes granted by `gh auth login`: repo, read:org, gist
 # Additional scope needed by the git module to upload SSH signing keys via API.
-REQUIRED_SCOPES="admin:ssh_signing_key"
+REQUIRED_SCOPES="admin:ssh_signing_key write:public_key"
 
 # Returns 0 if all space-separated scopes in $1 are present in the token.
 _gh_has_scopes() {
