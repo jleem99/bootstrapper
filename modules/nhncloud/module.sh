@@ -17,6 +17,14 @@ run_module "bash"
 module_run_platform
 
 run_module "tmux"
+
+# tmux module defaults to the 'gold' power theme; NHN Cloud instances use 'everforest'.
+log_info "Overriding tmux theme to 'everforest'..."
+sed -i "s/@tmux_power_theme 'gold'/@tmux_power_theme 'everforest'/" "$HOME/.tmux.conf"
+if [[ -n "${TMUX:-}" ]]; then
+  tmux source "$HOME/.tmux.conf"
+fi
+
 run_module "neovim"
 run_module "claude"
 
