@@ -30,6 +30,9 @@ else
   log_success "Installed Neovim config to $NVIM_CONFIG"
 fi
 
+# ── Alias vi to nvim ────────────────────────────────────────────────────────────
+add_alias "vi" "nvim"
+
 # ── Pre-install plugins at locked versions (non-fatal) ─────────────────────────
 if command -v nvim &>/dev/null; then
   try_run "Install Neovim plugins (Lazy restore)" \
