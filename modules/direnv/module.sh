@@ -9,25 +9,7 @@ install_packages "direnv"
 log_success "Direnv installed successfully!"
 
 mkdir -p ~/.config/direnv
-cat <<'EOF' > ~/.config/direnv/direnvrc
-# layout for conda environments
-layout_conda() {
-  local CONDA_HOME="${HOME}/miniconda3/"
-  PATH_add "$CONDA_HOME"/bin
-
-  if [ -n "$1" ]; then
-    # Explicit environment name from layout command.
-    local env_name="$1"
-    source activate ${env_name}
-  elif (grep -q name: environment.yml); then
-    # Detect environment name from `environment.yml` file in `.envrc` directory
-    source activate `grep name: environment.yml | sed -e 's/name: //'`
-  else
-    (>&2 echo No environment specified);
-    exit 1;
-  fi;
-}
-EOF
+cp "$(module_dir)/direnvrc" ~/.config/direnv/direnvrc
 
 echo 'eval "$(direnv hook '$(get_current_shell)')"' >> "$(get_shell_profile)"
 
