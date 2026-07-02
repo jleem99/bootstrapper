@@ -33,6 +33,9 @@ fi
 # ── Alias vi to nvim ────────────────────────────────────────────────────────────
 add_alias "vi" "nvim"
 
+# ── Set nvim as the default editor ──────────────────────────────────────────────
+add_export "EDITOR" "nvim"
+
 # ── Pre-install plugins at locked versions (non-fatal) ─────────────────────────
 if command -v nvim &>/dev/null; then
   try_run "Install Neovim plugins (Lazy restore)" \
