@@ -1,19 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-NODE_MAJOR=22
-
 # ── Ensure Homebrew is available ───────────────────────────────────────────────
 ensure_homebrew
-
-# ── Idempotency ────────────────────────────────────────────────────────────────
-if command -v node &>/dev/null; then
-  installed_major="$(node --version | sed 's/v\([0-9]*\).*/\1/')"
-  if [[ "$installed_major" == "$NODE_MAJOR" ]]; then
-    log_info "Node.js ${NODE_MAJOR}.x already installed: $(node --version)"
-    return 0 2>/dev/null || exit 0
-  fi
-fi
 
 # ── Install ────────────────────────────────────────────────────────────────────
 install_packages "node@${NODE_MAJOR}"
