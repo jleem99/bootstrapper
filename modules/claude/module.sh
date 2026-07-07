@@ -67,6 +67,10 @@ add_alias "claude" "claude --dangerously-skip-permissions"
 # ── Runtime dependencies ───────────────────────────────────────────────────────
 log_section "Installing runtime dependencies"
 
+# node — required by claude-mem (bunx) and codex (bun install -g); not declared
+# for arch, so run non-fatally rather than aborting the claude module there.
+try_run "Install node" run_module "node"
+
 # bun — required for claude-hud statusline and claude-mem plugin
 run_module "bun"
 
