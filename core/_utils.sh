@@ -258,6 +258,51 @@ clean_profile() {
   printf '%s\n' "$tmp" > "$profile"
 }
 
+# Remove every temp dir registered by download_and_extract. Wired to EXIT once.
+_bootstrapper_cleanup_tmp() {
+  local d
+  for d in "${_BOOTSTRAPPER_TMP_DIRS[@]:-}"; do
+    [[ -n "$d" ]] && rm -rf "$d"
+  done
+}
+
+# Download an archive, extract it into a fresh temp dir, and set <out_var> to the
+# extraction root. Temp dir is auto-removed when the calling script exits.
+# Supports .tgz/.tar.gz, .tar.xz/.txz, .tar.bz2/.tbz2, .tar, .zip.
+# All progress logs go to stderr so the nameref capture stays clean.
+# Usage: download_and_extract <url> <out_var>
+download_and_extract() {
+  local url="$1"
+  local -n _out="$2"
+
+  ensure_packages_installed curl >&2
+  local tmp; tmp="$(mktemp -d)"
+
+  # Register a single accumulating EXIT trap the first time we run.
+  if [[ -z "${_BOOTSTRAPPER_TMP_TRAP_SET:-}" ]]; then
+    _BOOTSTRAPPER_TMP_DIRS=()
+    trap _bootstrapper_cleanup_tmp EXIT
+    _BOOTSTRAPPER_TMP_TRAP_SET=1
+  fi
+  _BOOTSTRAPPER_TMP_DIRS+=("$tmp")
+
+  local archive="$tmp/archive"
+  log_info "Downloading $url" >&2
+  curl -fsSL "$url" -o "$archive"
+
+  local dest="$tmp/extracted"; mkdir -p "$dest"
+  case "$url" in
+    *.tar.gz|*.tgz)   ensure_packages_installed tar   >&2; tar -xzf "$archive" -C "$dest" ;;
+    *.tar.xz|*.txz)   ensure_packages_installed tar xz-utils >&2; tar -xJf "$archive" -C "$dest" ;;
+    *.tar.bz2|*.tbz2) ensure_packages_installed tar   >&2; tar -xjf "$archive" -C "$dest" ;;
+    *.tar)            ensure_packages_installed tar   >&2; tar -xf  "$archive" -C "$dest" ;;
+    *.zip)            ensure_packages_installed unzip >&2; unzip -q "$archive" -d "$dest" ;;
+    *) log_error "Unsupported archive type for URL: $url" >&2; return 1 ;;
+  esac
+
+  _out="$dest"
+}
+
 export -f _session_emit
 export -f get_current_shell
 export -f get_shell_profile
@@ -270,3 +315,5 @@ export -f add_alias
 export -f add_export
 export -f write_managed_block
 export -f clean_profile
+export -f _bootstrapper_cleanup_tmp
+export -f download_and_extract
