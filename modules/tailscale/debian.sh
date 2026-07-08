@@ -17,6 +17,11 @@ LEGACY_STATE="$HOME/.local/share/tailscale/tailscaled.state"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
 
+# Persist XDG_RUNTIME_DIR into shell profiles too, not just this run's process
+# environment — otherwise a future non-login shell (and the ts() alias below,
+# which reads $XDG_RUNTIME_DIR at call time) hits the same silent-failure bug.
+add_export "XDG_RUNTIME_DIR" "$XDG_RUNTIME_DIR"
+
 ensure_packages_installed curl
 
 log_info "Detecting CPU architecture..."
