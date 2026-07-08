@@ -1,0 +1,20 @@
+[Unit]
+Description=Tailscale userspace node agent
+Documentation=https://tailscale.com/docs/
+After=default.target
+
+[Service]
+Type=notify
+EnvironmentFile=-%h/.config/tailscale/tailscaled.env
+ExecStartPre=/usr/bin/mkdir -p %t/tailscale %h/.local/state/tailscale %h/.cache/tailscale
+ExecStart=%h/.local/bin/tailscaled \
+  --tun=userspace-networking \
+  --state=%h/.local/state/tailscale/tailscaled.state \
+  --socket=%t/tailscale/tailscaled.sock \
+  --port=${PORT} \
+  $FLAGS
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

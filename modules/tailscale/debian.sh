@@ -10,7 +10,14 @@ STATE_DIR="$HOME/.local/state/tailscale"
 CACHE_DIR="$HOME/.cache/tailscale"
 LEGACY_STATE="$HOME/.local/share/tailscale/tailscaled.state"
 
-ensure_packages_installed curl tar
+# `systemctl --user` / `loginctl` talk to the per-user D-Bus session at
+# $XDG_RUNTIME_DIR/bus. Non-login shells (su, provisioning/agent contexts, etc.)
+# often don't set XDG_RUNTIME_DIR, which makes those calls silently no-op with
+# "Failed to connect to bus: No medium found" instead of failing loudly.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
+
+ensure_packages_installed curl
 
 log_info "Detecting CPU architecture..."
 case "$(uname -m)" in
@@ -27,14 +34,10 @@ log_info "Stopping existing $SERVICE_NAME (if running)..."
 systemctl --user stop "$SERVICE_NAME" 2>/dev/null || true
 
 log_info "Downloading latest Tailscale static tarball..."
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
-
 TARBALL_URL="https://pkgs.tailscale.com/stable/tailscale_latest_${ARCH}.tgz"
-curl -fsSL "$TARBALL_URL" -o "$TMP_DIR/tailscale.tgz"
-tar -xzf "$TMP_DIR/tailscale.tgz" -C "$TMP_DIR"
+download_and_extract "$TARBALL_URL" EXTRACT_ROOT
 
-EXTRACT_DIR="$(find "$TMP_DIR" -maxdepth 1 -type d -name "tailscale_*_${ARCH}" | head -n 1)"
+EXTRACT_DIR="$(find "$EXTRACT_ROOT" -maxdepth 1 -type d -name "tailscale_*_${ARCH}" | head -n 1)"
 if [[ -z "$EXTRACT_DIR" || ! -f "$EXTRACT_DIR/tailscale" || ! -f "$EXTRACT_DIR/tailscaled" ]]; then
   log_error "Tarball did not contain expected tailscale/tailscaled binaries"
   exit 1
@@ -59,54 +62,26 @@ PORT=0
 FLAGS=--socks5-server=localhost:1055 --outbound-http-proxy-listen=localhost:1055
 EOF
 
-log_info "Writing $SYSTEMD_USER_DIR/$SERVICE_NAME..."
-cat > "$SYSTEMD_USER_DIR/$SERVICE_NAME" <<'EOF'
-[Unit]
-Description=Tailscale userspace node agent
-Documentation=https://tailscale.com/docs/
-After=default.target
+log_info "Installing $SYSTEMD_USER_DIR/$SERVICE_NAME..."
+install -m 0644 "$(module_dir)/tailscale-userspace.service" "$SYSTEMD_USER_DIR/$SERVICE_NAME"
 
-[Service]
-Type=notify
-EnvironmentFile=-%h/.config/tailscale/tailscaled.env
-ExecStartPre=/usr/bin/mkdir -p %t/tailscale %h/.local/state/tailscale %h/.cache/tailscale
-ExecStart=%h/.local/bin/tailscaled \
-  --tun=userspace-networking \
-  --state=%h/.local/state/tailscale/tailscaled.state \
-  --socket=%t/tailscale/tailscaled.sock \
-  --port=${PORT} \
-  $FLAGS
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=default.target
-EOF
-
-ZSHRC="$HOME/.zshrc"
-if [[ -f "$ZSHRC" ]] && ! grep -q '^ts() {' "$ZSHRC"; then
-  log_info "Appending ts() helper function to $ZSHRC..."
-  cat >> "$ZSHRC" <<'EOF'
-
-ts() {
-  "$HOME/.local/bin/tailscale" \
-    --socket="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/tailscale/tailscaled.sock" \
-    "$@"
-}
-EOF
-else
-  log_info "ts() helper already present in $ZSHRC (or no .zshrc) — skipping"
-fi
+# Ensure ~/.local/bin is on PATH and register the ts() shortcut across every
+# detected shell profile (not just zsh) via the shared alias utility.
+add_to_path "$BIN_DIR"
+add_alias "ts" "tailscale --socket=\$XDG_RUNTIME_DIR/tailscale/tailscaled.sock"
 
 log_info "Enabling user-manager linger so the daemon survives logout..."
 loginctl enable-linger "$USER"
 
 log_info "Reloading user systemd and starting $SERVICE_NAME..."
 systemctl --user daemon-reload
-systemctl --user enable --now "$SERVICE_NAME"
+if ! systemctl --user enable --now "$SERVICE_NAME"; then
+  log_error "Failed to start $SERVICE_NAME (is XDG_RUNTIME_DIR / user bus available?)"
+  exit 1
+fi
 
 log_success "Tailscale userspace daemon installed and running."
 log_info ""
-log_info "Next steps (run in a new zsh shell, or after 'source ~/.zshrc'):"
+log_info "Next steps (run in a new shell, or after 'source $(get_shell_profile)'):"
 log_info "  ts up --login-server=$LOGIN_SERVER"
 log_info "  ts status"
